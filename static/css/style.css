@@ -1,0 +1,185 @@
+/* ============================================================
+   Magal Médical - Styles personnalisés
+   Région Médicale de Diourbel
+   ============================================================ */
+
+:root {
+  --green-dark: #1a5c2a;
+  --green-mid: #2e7d43;
+  --green-light: #4caf72;
+  --green-pale: #e8f5ec;
+  --gold: #d4a017;
+  --red-alert: #c0392b;
+}
+
+/* Background vert foncé */
+.bg-green-dark { background-color: var(--green-dark) !important; }
+.bg-green-mid  { background-color: var(--green-mid)  !important; }
+.bg-green-pale { background-color: var(--green-pale) !important; }
+.text-green    { color: var(--green-mid) !important; }
+
+/* Navbar */
+.navbar-dark.bg-green-dark { background-color: var(--green-dark) !important; }
+
+/* Footer */
+footer.bg-green-dark { background-color: var(--green-dark) !important; }
+footer small { font-size: .8rem; opacity: .85; }
+
+/* Hero stats */
+.stat-card {
+  border-left: 4px solid var(--green-mid);
+  border-radius: 8px;
+  transition: transform .2s, box-shadow .2s;
+}
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(0,0,0,.12);
+}
+.stat-card .stat-icon {
+  font-size: 2.5rem;
+  opacity: .25;
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Card headers */
+.card-header-green {
+  background: var(--green-mid);
+  color: white;
+  font-weight: 600;
+}
+
+/* Tables */
+.table-magal thead th {
+  background-color: var(--green-dark);
+  color: white;
+  font-size: .82rem;
+  white-space: nowrap;
+}
+.table-magal tbody tr:hover {
+  background-color: var(--green-pale);
+}
+.table-magal td, .table-magal th {
+  padding: .4rem .6rem;
+  font-size: .83rem;
+}
+
+/* Badges de période */
+.badge-periode {
+  font-size: .72rem;
+  padding: .3rem .6rem;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+/* Formulaire de saisie */
+.saisie-table input[type="number"] {
+  width: 70px;
+  padding: .2rem .3rem;
+  text-align: center;
+  font-size: .83rem;
+}
+.saisie-table .affection-label {
+  font-size: .83rem;
+  max-width: 320px;
+}
+.saisie-section-header {
+  background: var(--green-pale);
+  font-weight: 700;
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--green-dark);
+}
+
+/* MPE row */
+.row-mpe { background: #fff3e0 !important; }
+.row-mpe:hover { background: #ffe0b2 !important; }
+
+/* Progress bar */
+.progress-completude {
+  height: 22px;
+  border-radius: 11px;
+}
+
+/* Période selector */
+.periode-btn {
+  min-width: 70px;
+}
+.periode-btn.active, .periode-btn:hover {
+  background-color: var(--green-mid) !important;
+  color: white !important;
+  border-color: var(--green-mid) !important;
+}
+
+/* Login page */
+.login-card {
+  max-width: 420px;
+  margin: 4rem auto;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.15);
+}
+.login-header {
+  background: linear-gradient(135deg, var(--green-dark), var(--green-mid));
+  border-radius: 12px 12px 0 0;
+  padding: 2rem;
+  text-align: center;
+  color: white;
+}
+.login-header .logo-icon { font-size: 3rem; opacity: .9; }
+
+/* Charts container */
+.chart-container {
+  position: relative;
+  height: 280px;
+}
+
+/* Responsive table wrapper */
+.table-responsive { border-radius: 8px; overflow: hidden; }
+
+/* Sidebar / quick nav */
+.quick-nav a {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .5rem .75rem;
+  border-radius: 6px;
+  color: var(--green-dark);
+  text-decoration: none;
+  font-size: .88rem;
+  transition: background .15s;
+}
+.quick-nav a:hover { background: var(--green-pale); }
+.quick-nav a.active {
+  background: var(--green-mid);
+  color: white;
+}
+
+/* Page titles */
+.page-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--green-dark);
+  border-bottom: 3px solid var(--green-light);
+  padding-bottom: .4rem;
+  margin-bottom: 1.2rem;
+}
+
+/* Status badges */
+.badge-soumis   { background-color: #1976d2; }
+.badge-valide   { background-color: #2e7d32; }
+.badge-brouillon{ background-color: #757575; }
+
+/* Totals row */
+.row-total {
+  background-color: #f0f7f2 !important;
+  font-weight: 700;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn .4s ease forwards; }

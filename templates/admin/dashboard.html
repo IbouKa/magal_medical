@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% block title %}Tableau de Bord Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3">
+  <h2 class="page-title">
+    <i class="bi bi-speedometer2 text-green"></i> Tableau de Bord
+    {% if edition %}<span class="text-muted fs-5">Edition {{ edition.annee }}</span>{% endif %}
+  </h2>
+
+  {% if not edition %}
+  <div class="alert alert-warning">
+    <i class="bi bi-exclamation-circle"></i> Aucune édition active.
+    <a href="{{ url_for('admin.liste_editions') }}" class="alert-link">Créer une édition</a>
+  </div>
+  {% else %}
+
+  <!-- KPI Row -->
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+      <div class="card stat-card border-0 shadow-sm h-100 position-relative">
+        <div class="card-body">
+          <p class="text-muted small mb-1">Total Consultants</p>
+          <h3 class="fw-bold text-green">{{ "{:,}".format(stats.total_consultants).replace(',', ' ') }}</h3>
+        </div>
+        <i class="bi bi-people-fill stat-icon text-success"></i>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card stat-card border-0 shadow-sm h-100 position-relative" style="border-left-color:#1976d2!important;">
+        <div class="card-body">
+          <p class="text-muted small mb-1">Hospitalisés</p>
+          <h3 class="fw-bold text-primary">{{ "{:,}".format(stats.total_hospit).replace(',', ' ') }}</h3>
+        </div>
+        <i class="bi bi-hospital-fill stat-icon text-primary"></i>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card stat-card border-0 shadow-sm h-100 position-relative" style="border-left-color:#c0392b!important;">
+        <div class="card-body">
+          <p class="text-muted small mb-1">Décès</p>
+          <h3 class="fw-bold text-danger">{{ stats.total_decedes }}</h3>
+        </div>
+        <i class="bi bi-exclamation-triangle-fill stat-icon text-danger"></i>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card stat-card border-0 shadow-sm h-100 position-relative" style="border-left-color:#7b1fa2!important;">
+        <div class="card-body">
+          <p class="text-muted small mb-1">Structures / Utilisateurs</p>
+          <h3 class="fw-bold" style="color:#7b1fa2;">{{ stats.nb_eps }} / {{ stats.nb_users }}</h3>
+        </div>
+        <i class="bi bi-building stat-icon" style="color:#7b1fa2;"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Complétude par période -->
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-header card-header-green d-flex justify-content-between align-items-center">
+      <span><i class="bi bi-check2-all"></i> Complétude par Période</span>
+      <a href="{{ url_for('admin.completude') }}" class="btn btn-sm btn-light">Voir détail</a>
+    </div>
+    <div class="card-body">
+      <div class="row g-2">
+        {% for c in stats.completude %}
+        <div class="col-6 col-md-2">
+          <div class="text-center mb-1">
+            <span class="fw-bold small" style="color:var(--green-dark);">{{ c.periode }}</span>
+          </div>
+          <div class="progress" style="height:18px;border-radius:9px;">
+            <div class="progress-bar {% if c.pct >= 80 %}bg-success{% elif c.pct >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                 style="width:{{ c.pct }}%">
+              <span class="small fw-bold">{{ c.pct }}%</span>
+            </div>
+          </div>
+          <div class="text-center" style="font-size:.72rem;color:#666;">
+            {{ c.nb_soumis }}/{{ c.nb_attendus }}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header card-header-green"><i class="bi bi-graph-up"></i> Évolution par Période</div>
+        <div class="card-body"><div class="chart-container"><canvas id="chartPeriode"></canvas></div></div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header card-header-green"><i class="bi bi-map-fill"></i> Consultants par Zone</div>
+        <div class="card-body p-0">
+          <div class="table-responsive" style="max-height:260px;overflow-y:auto;">
+            <table class="table table-magal mb-0">
+              <thead><tr><th>Zone</th><th class="text-end">Total</th></tr></thead>
+              <tbody>
+                {% for nom, total in stats.by_district %}
+                <tr><td>{{ nom }}</td><td class="text-end fw-bold text-green">{{ total or 0 }}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header card-header-green"><i class="bi bi-list-ol"></i> Top 10 Affections</div>
+        <div class="card-body p-0">
+          <table class="table table-magal mb-0">
+            <thead><tr><th>#</th><th>Affection</th><th class="text-end">Cas</th></tr></thead>
+            <tbody>
+              {% for aff, total in stats.top_affections %}
+              <tr>
+                <td class="text-muted">{{ loop.index }}</td>
+                <td>{{ aff }}</td>
+                <td class="text-end fw-bold text-green">{{ total or 0 }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header" style="background:#c0392b;color:white;font-weight:600;">
+          <i class="bi bi-exclamation-triangle-fill"></i> MPE
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-magal mb-0">
+            <thead><tr><th>Maladie</th><th class="text-end">Cas</th></tr></thead>
+            <tbody>
+              {% for aff, total in stats.mpe %}
+              {% if total and total > 0 %}
+              <tr class="table-warning">
+                <td><i class="bi bi-exclamation-circle text-danger me-1"></i>{{ aff }}</td>
+                <td class="text-end fw-bold text-danger">{{ total }}</td>
+              </tr>
+              {% endif %}
+              {% else %}
+              <tr><td colspan="2" class="text-center text-success py-3">
+                <i class="bi bi-check-circle-fill"></i> Aucun cas MPE
+              </td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fiches récentes -->
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-header card-header-green d-flex justify-content-between align-items-center">
+      <span><i class="bi bi-clock-history"></i> Dernières soumissions</span>
+      <a href="{{ url_for('admin.completude') }}" class="btn btn-sm btn-light">Voir tout</a>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-magal mb-0">
+          <thead><tr><th>Structure</th><th>District</th><th>Période</th><th>Total</th><th>Date</th></tr></thead>
+          <tbody>
+            {% for f in stats.fiches_recentes %}
+            <tr>
+              <td class="fw-semibold">{{ f.eps.nom }}</td>
+              <td class="text-muted small">{{ f.eps.district.nom }}</td>
+              <td><span class="badge bg-success">{{ f.periode }}</span></td>
+              <td class="fw-bold text-green">{{ f.get_total_consultants() }}</td>
+              <td class="text-muted small">{{ f.date_saisie.strftime('%d/%m %H:%M') }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center text-muted">Aucune soumission</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var periodeData = {{ stats.completude | tojson if stats.completude else '[]' }};
+var labels = periodeData.map(function(d){ return d.periode; });
+var values = periodeData.map(function(d){ return d.nb_soumis; });
+new Chart(document.getElementById('chartPeriode'), {
+  type: 'bar',
+  data: {
+    labels: labels,
+    datasets: [{
+      label: 'Fiches soumises',
+      data: values,
+      backgroundColor: 'rgba(46,125,67,0.75)',
+      borderColor: '#1a5c2a',
+      borderWidth: 1,
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true } }
+  }
+});
+</script>
+{% endblock %}

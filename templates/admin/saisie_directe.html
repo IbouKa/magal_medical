@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Saisie — {{ eps.nom }}{% endblock %}
+{% block content %}
+<div class="container-fluid px-3">
+  <h2 class="page-title">
+    <i class="bi bi-pencil-fill text-green"></i> Saisie — {{ eps.nom }}
+    <small class="text-muted fs-6">({{ eps.type_label }} — {{ eps.district.nom }})</small>
+  </h2>
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+      <div class="btn-group">
+        {% for p in periodes %}
+        <a href="{{ url_for('admin.saisie_directe', eps_id=eps.id, periode=p) }}"
+           class="btn btn-sm btn-outline-success periode-btn {% if selected_periode == p %}active{% endif %}">{{ p }}</a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <form method="POST">
+    <input type="hidden" name="periode" value="{{ selected_periode }}">
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header card-header-green">
+        <i class="bi bi-table"></i> {{ eps.nom }} — Période {{ selected_periode }}
+        {% if fiche %}<span class="badge bg-success ms-2">Fiche existante</span>{% endif %}
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-magal saisie-table mb-0">
+            <thead>
+              <tr>
+                <th>N°</th><th>Affection / Motif</th>
+                <th class="text-center">Cas simples</th>
+                <th class="text-center">Hospitalisés</th>
+                <th class="text-center">Évacués</th>
+                <th class="text-center text-danger">Décédés</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% set ns = namespace(cat='') %}
+              {% for aff in affections %}
+              {% if aff.categorie != ns.cat %}{% set ns.cat = aff.categorie %}
+              <tr class="saisie-section-header"><td colspan="6">
+                {% if aff.categorie == 'traumatisme' %}Traumatismes et Accidents
+                {% elif aff.categorie == 'infectieux' %}Maladies Infectieuses
+                {% elif aff.categorie == 'respiratoire' %}Affections Respiratoires
+                {% elif aff.categorie == 'digestif' %}Affections Digestives
+                {% elif aff.categorie == 'cardiovasculaire' %}Affections Cardiovasculaires
+                {% elif aff.categorie == 'mpe' %}Maladies a Potentiel Epidemique
+                {% elif aff.categorie == 'gynaeco' %}Gyneco-Obstetrique
+                {% elif aff.categorie == 'chronique' %}Maladies Chroniques
+                {% else %}Autres Affections{% endif %}
+              </td></tr>
+              {% endif %}
+              {% set lg = lignes_map.get(aff.id) %}
+              <tr class="{% if aff.is_mpe %}row-mpe{% endif %}">
+                <td class="text-muted small">{{ aff.numero }}</td>
+                <td class="small">{{ aff.libelle }}{% if aff.is_mpe %}<i class="bi bi-exclamation-circle text-danger ms-1"></i>{% endif %}</td>
+                <td class="text-center"><input type="number" name="simples_{{ aff.id }}" min="0" value="{{ lg.cas_simples if lg else 0 }}" class="form-control form-control-sm d-inline-block" style="width:70px;"></td>
+                <td class="text-center"><input type="number" name="hospit_{{ aff.id }}" min="0" value="{{ lg.hospitalises if lg else 0 }}" class="form-control form-control-sm d-inline-block" style="width:70px;"></td>
+                <td class="text-center"><input type="number" name="evacues_{{ aff.id }}" min="0" value="{{ lg.evacues if lg else 0 }}" class="form-control form-control-sm d-inline-block" style="width:70px;"></td>
+                <td class="text-center"><input type="number" name="decedes_{{ aff.id }}" min="0" value="{{ lg.decedes if lg else 0 }}" class="form-control form-control-sm d-inline-block" style="width:70px;"></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body">
+        <label class="form-label fw-semibold">Observations</label>
+        <textarea name="observations" class="form-control" rows="2">{{ fiche.observations if fiche else '' }}</textarea>
+      </div>
+    </div>
+    <div class="d-flex gap-2 mb-4">
+      <button type="submit" class="btn btn-success btn-lg">
+        <i class="bi bi-save2-fill"></i> Enregistrer
+      </button>
+      <a href="{{ url_for('admin.completude', periode=selected_periode) }}" class="btn btn-outline-secondary btn-lg">Annuler</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

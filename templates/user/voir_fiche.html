@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Fiche {{ fiche.periode }} — {{ fiche.eps.nom }}{% endblock %}
+{% block content %}
+<div class="container-fluid px-3">
+  <div class="d-flex justify-content-between align-items-start mb-3">
+    <h2 class="page-title mb-0">
+      <i class="bi bi-file-earmark-text text-green"></i>
+      {{ fiche.eps.nom }} — <span class="badge bg-success">{{ fiche.periode }}</span>
+    </h2>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('user.saisie', periode=fiche.periode) }}" class="btn btn-warning">
+        <i class="bi bi-pencil-fill"></i> Modifier
+      </a>
+      <a href="{{ url_for('user.mes_fiches') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Retour
+      </a>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center stat-card">
+        <div class="card-body py-2">
+          <p class="text-muted small mb-1">Consultants</p>
+          <h3 class="fw-bold text-green mb-0">{{ fiche.get_total_consultants() }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center stat-card" style="border-left-color:#1976d2!important;">
+        <div class="card-body py-2">
+          <p class="text-muted small mb-1">Hospitalisés</p>
+          <h3 class="fw-bold text-primary mb-0">{{ fiche.get_total_hospitalises() }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center stat-card" style="border-left-color:#f57c00!important;">
+        <div class="card-body py-2">
+          <p class="text-muted small mb-1">Évacués</p>
+          <h3 class="fw-bold text-warning mb-0">{{ fiche.get_total_evacues() }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center stat-card" style="border-left-color:#c0392b!important;">
+        <div class="card-body py-2">
+          <p class="text-muted small mb-1">Décès</p>
+          <h3 class="fw-bold text-danger mb-0">{{ fiche.get_total_decedes() }}</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Détail -->
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-header card-header-green">
+      <i class="bi bi-table"></i> Détail par Affection
+      <span class="text-white-50 ms-2 small">Saisi le {{ fiche.date_saisie.strftime('%d/%m/%Y à %H:%M') }} par {{ fiche.saisi_par or 'N/C' }}</span>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-magal mb-0">
+          <thead>
+            <tr>
+              <th>N°</th><th>Affection</th>
+              <th class="text-center">Cas simples</th>
+              <th class="text-center">Hospitalisés</th>
+              <th class="text-center">Évacués</th>
+              <th class="text-center text-danger">Décédés</th>
+              <th class="text-center fw-bold">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set ns = namespace(cat='') %}
+            {% for aff in affections %}
+            {% set lg = lignes_map.get(aff.id) %}
+            {% set total = lg.total if lg else 0 %}
+            {% if lg and total > 0 %}
+            {% if aff.categorie != ns.cat %}{% set ns.cat = aff.categorie %}
+            <tr class="saisie-section-header"><td colspan="7">
+              {% if aff.categorie == 'traumatisme' %}Traumatismes
+              {% elif aff.categorie == 'infectieux' %}Infectieux
+              {% elif aff.categorie == 'respiratoire' %}Respiratoire
+              {% elif aff.categorie == 'digestif' %}Digestif
+              {% elif aff.categorie == 'cardiovasculaire' %}Cardiovasculaire
+              {% elif aff.categorie == 'mpe' %}MPE
+              {% elif aff.categorie == 'gynaeco' %}Gyneco
+              {% elif aff.categorie == 'chronique' %}Chronique
+              {% else %}Autres{% endif %}
+            </td></tr>
+            {% endif %}
+            <tr class="{% if aff.is_mpe %}row-mpe{% endif %}">
+              <td class="text-muted small">{{ aff.numero }}</td>
+              <td class="small">{{ aff.libelle }}
+                {% if aff.is_mpe %}<i class="bi bi-exclamation-circle text-danger ms-1"></i>{% endif %}
+              </td>
+              <td class="text-center">{{ lg.cas_simples or 0 }}</td>
+              <td class="text-center {% if lg.hospitalises > 0 %}text-primary fw-bold{% endif %}">{{ lg.hospitalises or 0 }}</td>
+              <td class="text-center {% if lg.evacues > 0 %}text-warning fw-bold{% endif %}">{{ lg.evacues or 0 }}</td>
+              <td class="text-center {% if lg.decedes > 0 %}text-danger fw-bold{% endif %}">{{ lg.decedes or 0 }}</td>
+              <td class="text-center fw-bold text-green">{{ total }}</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr class="row-total">
+              <td colspan="2" class="fw-bold">TOTAL</td>
+              <td class="text-center fw-bold">{{ lignes_map.values() | sum(attribute='cas_simples') }}</td>
+              <td class="text-center fw-bold text-primary">{{ lignes_map.values() | sum(attribute='hospitalises') }}</td>
+              <td class="text-center fw-bold text-warning">{{ lignes_map.values() | sum(attribute='evacues') }}</td>
+              <td class="text-center fw-bold text-danger">{{ lignes_map.values() | sum(attribute='decedes') }}</td>
+              <td class="text-center fw-bold text-green">{{ fiche.get_total_consultants() }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {% if fiche.observations %}
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-header card-header-green"><i class="bi bi-chat-text-fill"></i> Observations</div>
+    <div class="card-body">{{ fiche.observations }}</div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

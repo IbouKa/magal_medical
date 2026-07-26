@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}{{ action }} Utilisateur{% endblock %}
+{% block content %}
+<div class="container-fluid px-3">
+  <h2 class="page-title"><i class="bi bi-person-fill text-green"></i> {{ action }} Utilisateur</h2>
+  <div class="card border-0 shadow-sm" style="max-width:640px;">
+    <div class="card-body p-4">
+      <form method="POST">
+        <div class="row g-3">
+          {% if not user %}
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Identifiant *</label>
+            <input type="text" name="username" class="form-control" required
+                   placeholder="ex: ps_khaira">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Mot de passe *</label>
+            <input type="password" name="password" class="form-control" required minlength="6">
+          </div>
+          {% else %}
+          <div class="col-12">
+            <p class="mb-1 text-muted small">Identifiant : <strong>{{ user.username }}</strong></p>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Nouveau mot de passe</label>
+            <input type="password" name="new_password" class="form-control" minlength="6"
+                   placeholder="Laisser vide pour ne pas changer">
+          </div>
+          {% endif %}
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Nom complet</label>
+            <input type="text" name="nom_complet" class="form-control"
+                   value="{{ user.nom_complet if user else '' }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Email</label>
+            <input type="email" name="email" class="form-control"
+                   value="{{ user.email if user else '' }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Téléphone</label>
+            <input type="text" name="telephone" class="form-control"
+                   value="{{ user.telephone if user else '' }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Rôle *</label>
+            <select name="role" class="form-select">
+              <option value="responsable" {% if user and user.role == 'responsable' %}selected{% endif %}>Responsable EPS</option>
+              <option value="admin" {% if user and user.role == 'admin' %}selected{% endif %}>Administrateur</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">EPS associé</label>
+            <select name="eps_id" class="form-select">
+              <option value="">-- Aucun (Admin) --</option>
+              {% for eps in eps_list %}
+              <option value="{{ eps.id }}" {% if user and user.eps_id == eps.id %}selected{% endif %}>
+                {{ eps.nom }} ({{ eps.type_label }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          {% if user %}
+          <div class="col-12">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="actif" id="actif"
+                     {% if user.actif %}checked{% endif %}>
+              <label class="form-check-label" for="actif">Compte actif</label>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        <div class="d-flex gap-2 mt-4">
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-circle"></i> {{ action }}
+          </button>
+          <a href="{{ url_for('admin.liste_utilisateurs') }}" class="btn btn-outline-secondary">Annuler</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

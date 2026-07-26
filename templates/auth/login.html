@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Connexion{% endblock %}
+
+{% block content %}
+<div class="login-card card mx-auto mt-5">
+  <div class="login-header">
+    <div class="logo-icon"><i class="bi bi-hospital-fill"></i></div>
+    <h4 class="mt-2 fw-bold mb-0">Grand Magal de Touba</h4>
+    <p class="mb-0 opacity-75" style="font-size:.85rem;">Gestion des Données Médicales — Diourbel</p>
+  </div>
+  <div class="card-body p-4">
+    <h5 class="text-center mb-4 text-green">
+      <i class="bi bi-box-arrow-in-right"></i> Connexion
+    </h5>
+    <form method="POST">
+      <div class="mb-3">
+        <label class="form-label fw-semibold">
+          <i class="bi bi-person-fill text-green"></i> Identifiant
+        </label>
+        <input type="text" name="username" class="form-control form-control-lg"
+               placeholder="Votre identifiant" required autofocus
+               value="{{ request.form.get('username', '') }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">
+          <i class="bi bi-lock-fill text-green"></i> Mot de passe
+        </label>
+        <div class="input-group">
+          <input type="password" name="password" id="pwdField"
+                 class="form-control form-control-lg" placeholder="..." required>
+          <button class="btn btn-outline-secondary" type="button" onclick="togglePwd()">
+            <i class="bi bi-eye" id="eyeIcon"></i>
+          </button>
+        </div>
+      </div>
+      <div class="mb-3 form-check">
+        <input type="checkbox" class="form-check-input" id="remember" name="remember">
+        <label class="form-check-label" for="remember">Se souvenir de moi</label>
+      </div>
+      <div class="d-grid">
+        <button type="submit" class="btn btn-lg fw-bold"
+                style="background:var(--green-mid);color:white;">
+          <i class="bi bi-box-arrow-in-right"></i> Se connecter
+        </button>
+      </div>
+    </form>
+  </div>
+  <div class="card-footer text-center text-muted" style="font-size:.8rem;">
+    <a href="{{ url_for('public.stats') }}" class="text-decoration-none">
+      <i class="bi bi-bar-chart-fill"></i> Voir les statistiques publiques
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function togglePwd() {
+  var f = document.getElementById('pwdField');
+  var e = document.getElementById('eyeIcon');
+  if (f.type === 'password') {
+    f.type = 'text';
+    e.className = 'bi bi-eye-slash';
+  } else {
+    f.type = 'password';
+    e.className = 'bi bi-eye';
+  }
+}
+</script>
+{% endblock %}

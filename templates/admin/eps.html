@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Structures EPS{% endblock %}
+{% block content %}
+<div class="container-fluid px-3">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="page-title mb-0"><i class="bi bi-building text-green"></i> Structures EPS</h2>
+    <a href="{{ url_for('admin.nouveau_eps') }}" class="btn btn-success">
+      <i class="bi bi-plus-lg"></i> Ajouter
+    </a>
+  </div>
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-magal mb-0">
+          <thead>
+            <tr><th>Code</th><th>Nom</th><th>Type</th><th>District</th><th>Responsable</th><th class="text-center">Actif</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            {% for eps in eps_list %}
+            <tr class="{% if not eps.actif %}table-secondary{% endif %}">
+              <td class="text-muted small">{{ eps.code or '-' }}</td>
+              <td class="fw-semibold">{{ eps.nom }}</td>
+              <td>
+                <span class="badge {% if eps.type_eps == 'hopital' %}bg-danger{% elif eps.type_eps == 'centre_sante' %}bg-primary{% elif eps.type_eps == 'district' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                  {{ eps.type_label }}
+                </span>
+              </td>
+              <td class="small">{{ eps.district.nom }}</td>
+              <td class="small">{{ eps.responsable or '-' }}</td>
+              <td class="text-center">
+                {% if eps.actif %}<i class="bi bi-check-circle-fill text-success"></i>
+                {% else %}<i class="bi bi-x-circle-fill text-danger"></i>{% endif %}
+              </td>
+              <td>
+                <a href="{{ url_for('admin.modifier_eps', eps_id=eps.id) }}" class="btn btn-sm btn-outline-primary py-0">
+                  <i class="bi bi-pencil"></i>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

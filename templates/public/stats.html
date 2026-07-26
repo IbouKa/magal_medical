@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+{% block title %}Statistiques Publiques{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3">
+
+  <!-- Header -->
+  <div class="row mb-3 align-items-center">
+    <div class="col">
+      <h2 class="page-title mb-0">
+        <i class="bi bi-bar-chart-fill text-green"></i>
+        Statistiques — Grand Magal de Touba
+        {% if edition %}<span class="text-muted fs-5">Edition {{ edition.annee }}</span>{% endif %}
+      </h2>
+    </div>
+    <div class="col-auto">
+      {% if not current_user.is_authenticated %}
+      <a href="{{ url_for('auth.login') }}" class="btn btn-sm"
+         style="background:var(--green-mid);color:white;">
+        <i class="bi bi-box-arrow-in-right"></i> Connexion EPS
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if not edition %}
+  <div class="alert alert-warning">
+    <i class="bi bi-exclamation-circle"></i> Aucune édition active pour le moment.
+  </div>
+  {% else %}
+
+  <!-- Filtres -->
+  <div class="card mb-3 border-0 shadow-sm">
+    <div class="card-body py-2">
+      <form method="GET" class="row g-2 align-items-end">
+        <div class="col-auto">
+          <label class="form-label fw-semibold mb-1 small">Période</label>
+          <div class="btn-group">
+            <a href="{{ url_for('public.stats', district=selected_district) }}"
+               class="btn btn-sm btn-outline-success periode-btn {% if not selected_periode %}active{% endif %}">
+              Toutes
+            </a>
+            {% for p in periodes %}
+            <a href="{{ url_for('public.stats', periode=p, district=selected_district) }}"
+               class="btn btn-sm btn-outline-success periode-btn {% if selected_periode == p %}active{% endif %}">
+              {{ p }}
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="col-auto">
+          <label class="form-label fw-semibold mb-1 small">District / Zone</label>
+          <select name="district" class="form-select form-select-sm"
+                  onchange="this.form.submit()">
+            <option value="">-- Tous les districts --</option>
+            {% for d in districts %}
+            <option value="{{ d.id }}" {% if selected_district == d.id|string %}selected{% endif %}>
+              {{ d.nom }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+      <div class="card stat-card h-100 position-relative border-0 shadow-sm">
+        <div class="card-body">
+          <p class="text-muted small mb-1">Total Consultants</p>
+          <h3 class="fw-bold text-green mb-0">{{ "{:,}".format(stats.total_consultants).replace(',', ' ') }}</h3>
+          <small class="text-muted">Cas simples + hospitalisés + évacués</small>
+        </div>
+        <i class="bi bi-people-fill stat-icon text-success"></i>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card stat-card h-100 position-relative border-0 shadow-sm" style="border-left-color:#1976d2!important;">
+        <div class="card-body">
+          <p class="text-muted small mb-1">Hospitalisés</p>
+          <h3 class="fw-bold text-primary mb-0">{{ "{:,}".format(stats.total_hospit).replace(',', ' ') }}</h3>
+          <small class="text-muted">Cas graves hospitalisés</small>
+        </div>
+        <i class="bi bi-hospital-fill stat-icon text-primary"></i>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card stat-card h-100 position-relative border-0 shadow-sm" style="border-left-color:#f57c00!important;">
+        <div class="card-body">
+          <p class="text-muted small mb-1">Évacués</p>
+          <h3 class="fw-bold text-warning mb-0">{{ "{:,}".format(stats.total_evacues).replace(',', ' ') }}</h3>
+          <small class="text-muted">Références et évacuations</small>
+        </div>
+        <i class="bi bi-ambulance stat-icon text-warning"></i>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card stat-card h-100 position-relative border-0 shadow-sm" style="border-left-color:#c0392b!important;">
+        <div class="card-body">
+          <p class="text-muted small mb-1">Décès</p>
+          <h3 class="fw-bold text-danger mb-0">{{ "{:,}".format(stats.total_decedes).replace(',', ' ') }}</h3>
+          <small class="text-muted">Décès enregistrés</small>
+        </div>
+        <i class="bi bi-exclamation-triangle-fill stat-icon text-danger"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Complétude -->
+  <div class="card mb-3 border-0 shadow-sm">
+    <div class="card-body py-2">
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <span class="small fw-semibold">
+          <i class="bi bi-check2-all text-success"></i> Taux de complétude
+        </span>
+        <span class="small text-muted">
+          {{ stats.nb_soumis }} / {{ stats.nb_eps_attendus }} EPS
+          &mdash; <strong class="text-green">{{ stats.completude_pct }}%</strong>
+        </span>
+      </div>
+      <div class="progress" style="height:14px;border-radius:7px;">
+        <div class="progress-bar bg-success" style="width:{{ stats.completude_pct }}%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="row g-3 mb-3">
+    <!-- Courbe par période -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header card-header-green">
+          <i class="bi bi-graph-up"></i> Évolution par Période
+        </div>
+        <div class="card-body">
+          <div class="chart-container">
+            <canvas id="chartPeriode"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Répartition par district -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header card-header-green">
+          <i class="bi bi-pie-chart-fill"></i> Répartition par Zone
+        </div>
+        <div class="card-body">
+          <div class="chart-container">
+            <canvas id="chartDistrict"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <!-- Top 10 Affections -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header card-header-green">
+          <i class="bi bi-list-ol"></i> Top 10 Affections
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-magal mb-0">
+              <thead>
+                <tr>
+                  <th>#</th><th>Affection</th><th class="text-end">Cas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for aff, total in stats.top_affections %}
+                <tr>
+                  <td class="fw-bold text-muted">{{ loop.index }}</td>
+                  <td>{{ aff }}</td>
+                  <td class="text-end fw-bold text-green">{{ total or 0 }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="text-center text-muted">Aucune donnée</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MPE -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header" style="background:#c0392b;color:white;font-weight:600;">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          Maladies à Potentiel Épidémique (MPE)
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-magal mb-0">
+              <thead>
+                <tr><th>Maladie</th><th class="text-end">Cas</th></tr>
+              </thead>
+              <tbody>
+                {% for aff, total in stats.mpe_data %}
+                {% if total and total > 0 %}
+                <tr class="table-warning">
+                  <td><i class="bi bi-exclamation-circle text-danger me-1"></i>{{ aff }}</td>
+                  <td class="text-end fw-bold text-danger">{{ total }}</td>
+                </tr>
+                {% endif %}
+                {% else %}
+                <tr><td colspan="2" class="text-center text-success">
+                  <i class="bi bi-check-circle"></i> Aucun cas MPE signalé
+                </td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var periodeLabels = {{ stats.periode_data | map(attribute='periode') | list | tojson }};
+var periodeTotals = {{ stats.periode_data | map(attribute='total') | list | tojson }};
+var districtLabels = {{ stats.district_data | map(attribute=0) | list | tojson }};
+var districtTotals = {{ stats.district_data | map(attribute=1) | list | tojson }};
+
+// Chart Période
+new Chart(document.getElementById('chartPeriode'), {
+  type: 'bar',
+  data: {
+    labels: periodeLabels,
+    datasets: [{
+      label: 'Total consultants',
+      data: periodeTotals,
+      backgroundColor: 'rgba(46,125,67,0.75)',
+      borderColor: '#1a5c2a',
+      borderWidth: 1,
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, ticks: { font: { size: 11 } } },
+              x: { ticks: { font: { size: 12, weight: 'bold' } } } }
+  }
+});
+
+// Chart District (doughnut)
+var colors = ['#1a5c2a','#2e7d43','#4caf72','#81c784','#a5d6a7',
+              '#1976d2','#42a5f5','#f57c00','#ffa726','#c0392b'];
+new Chart(document.getElementById('chartDistrict'), {
+  type: 'doughnut',
+  data: {
+    labels: districtLabels,
+    datasets: [{
+      data: districtTotals,
+      backgroundColor: colors,
+      borderWidth: 2
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'right', labels: { font: { size: 10 }, boxWidth: 12 } }
+    }
+  }
+});
+</script>
+{% endblock %}

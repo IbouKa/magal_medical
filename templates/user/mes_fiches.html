@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Mes Fiches{% endblock %}
+{% block content %}
+<div class="container-fluid px-3">
+  <h2 class="page-title">
+    <i class="bi bi-folder2-open text-green"></i> Mes Fiches Soumises
+    {% if eps %}<small class="text-muted fs-5">— {{ eps.nom }}</small>{% endif %}
+  </h2>
+
+  {% if not fiches %}
+  <div class="alert alert-info">
+    <i class="bi bi-info-circle-fill"></i>
+    Aucune fiche soumise pour cette édition.
+    <a href="{{ url_for('user.saisie') }}" class="alert-link">Saisir la première fiche</a>
+  </div>
+  {% else %}
+  <div class="card border-0 shadow-sm">
+    <div class="card-header card-header-green">
+      <i class="bi bi-list-ul"></i>
+      Fiches de l'édition {{ edition.annee if edition else '' }} — {{ fiches|length }} / 6 périodes
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-magal mb-0">
+          <thead>
+            <tr>
+              <th>Période</th>
+              <th class="text-center">Total Consultants</th>
+              <th class="text-center">Hospitalisés</th>
+              <th class="text-center">Évacués</th>
+              <th class="text-center text-danger">Décédés</th>
+              <th>Date saisie</th>
+              <th>Saisi par</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for f in fiches %}
+            <tr>
+              <td><span class="badge bg-success fs-6">{{ f.periode }}</span></td>
+              <td class="text-center fw-bold text-green">{{ f.get_total_consultants() }}</td>
+              <td class="text-center {% if f.get_total_hospitalises() > 0 %}text-primary fw-bold{% endif %}">
+                {{ f.get_total_hospitalises() }}
+              </td>
+              <td class="text-center {% if f.get_total_evacues() > 0 %}text-warning fw-bold{% endif %}">
+                {{ f.get_total_evacues() }}
+              </td>
+              <td class="text-center {% if f.get_total_decedes() > 0 %}text-danger fw-bold{% endif %}">
+                {{ f.get_total_decedes() }}
+              </td>
+              <td class="text-muted small">{{ f.date_saisie.strftime('%d/%m/%Y %H:%M') }}</td>
+              <td class="small">{{ f.saisi_par or '-' }}</td>
+              <td>
+                <a href="{{ url_for('user.voir_fiche', fiche_id=f.id) }}" class="btn btn-sm btn-outline-info py-0">
+                  <i class="bi bi-eye"></i> Voir
+                </a>
+                <a href="{{ url_for('user.saisie', periode=f.periode) }}" class="btn btn-sm btn-outline-warning py-0 ms-1">
+                  <i class="bi bi-pencil"></i> Modifier
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr class="row-total">
+              <td class="fw-bold">TOTAL</td>
+              <td class="text-center fw-bold text-green">{{ fiches | sum(attribute='get_total_consultants()') if false else '' }}</td>
+              <td colspan="6"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

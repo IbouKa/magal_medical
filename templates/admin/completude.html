@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Complétude{% endblock %}
+{% block content %}
+<div class="container-fluid px-3">
+  <h2 class="page-title">
+    <i class="bi bi-check2-all text-green"></i> Suivi de la Complétude
+    {% if edition %}<span class="text-muted fs-5">— {{ edition.annee }}</span>{% endif %}
+  </h2>
+
+  <!-- Période selector -->
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+      <div class="btn-group">
+        {% for p in periodes %}
+        <a href="{{ url_for('admin.completude', periode=p) }}"
+           class="btn btn-sm btn-outline-success periode-btn {% if selected_periode == p %}active{% endif %}">
+          {{ p }}
+        </a>
+        {% endfor %}
+      </div>
+      <span class="ms-3 fw-semibold">
+        Période : <span class="text-green">{{ selected_periode }}</span>
+      </span>
+    </div>
+  </div>
+
+  <!-- Stats complétude -->
+  <div class="row g-3 mb-3">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm text-center">
+        <div class="card-body">
+          <h1 class="fw-bold text-green">{{ nb_soumis }}</h1>
+          <p class="text-muted mb-0">Structures ayant soumis</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm text-center">
+        <div class="card-body">
+          <h1 class="fw-bold text-muted">{{ nb_total }}</h1>
+          <p class="text-muted mb-0">Structures attendues</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm text-center">
+        <div class="card-body">
+          <h1 class="fw-bold {% if pct >= 80 %}text-success{% elif pct >= 50 %}text-warning{% else %}text-danger{% endif %}">
+            {{ pct }}%
+          </h1>
+          <p class="text-muted mb-0">Taux de complétude</p>
+          <div class="progress mt-2" style="height:10px;border-radius:5px;">
+            <div class="progress-bar {% if pct >= 80 %}bg-success{% elif pct >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                 style="width:{{ pct }}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liste des EPS -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header card-header-green">
+      <i class="bi bi-building"></i> Statut par Structure
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-magal mb-0">
+          <thead>
+            <tr>
+              <th>Structure</th><th>Type</th><th>District</th>
+              <th class="text-center">Statut</th><th class="text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in data %}
+            <tr>
+              <td class="fw-semibold">{{ item.eps.nom }}</td>
+              <td>
+                <span class="badge {% if item.eps.type_eps == 'hopital' %}bg-danger{% elif item.eps.type_eps == 'centre_sante' %}bg-primary{% else %}bg-secondary{% endif %}">
+                  {{ item.eps.prefixe }}
+                </span>
+              </td>
+              <td class="text-muted small">{{ item.eps.district.nom }}</td>
+              <td class="text-center">
+                {% if item.soumis %}
+                <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Soumis</span>
+                {% else %}
+                <span class="badge bg-danger"><i class="bi bi-x-circle-fill"></i> En attente</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <a href="{{ url_for('admin.saisie_directe', eps_id=item.eps.id, periode=selected_periode) }}"
+                   class="btn btn-xs btn-sm btn-outline-success py-0 px-2">
+                  <i class="bi bi-pencil"></i>
+                  {% if item.soumis %}Modifier{% else %}Saisir{% endif %}
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

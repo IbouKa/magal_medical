@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Rapport Consolidé{% endblock %}
+{% block content %}
+<div class="container-fluid px-3">
+  <h2 class="page-title">
+    <i class="bi bi-file-earmark-bar-graph text-green"></i> Rapport Consolidé
+    {% if edition %}<span class="text-muted fs-5">— {{ edition.annee }}</span>{% endif %}
+  </h2>
+
+  <!-- Filtres -->
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+      <form method="GET" class="row g-2 align-items-end">
+        <div class="col-auto">
+          <label class="form-label fw-semibold mb-1 small">Période</label>
+          <div class="btn-group">
+            <a href="{{ url_for('admin.rapports', district=selected_district) }}"
+               class="btn btn-sm btn-outline-success {% if not selected_periode %}active{% endif %}">Toutes</a>
+            {% for p in periodes %}
+            <a href="{{ url_for('admin.rapports', periode=p, district=selected_district) }}"
+               class="btn btn-sm btn-outline-success {% if selected_periode == p %}active{% endif %}">{{ p }}</a>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="col-auto">
+          <label class="form-label fw-semibold mb-1 small">Zone</label>
+          <select name="district" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">-- Toutes les zones --</option>
+            {% for d in districts %}
+            <option value="{{ d.id }}" {% if selected_district == d.id|string %}selected{% endif %}>{{ d.nom }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-auto">
+          <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-printer"></i> Imprimer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tableau complet -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header card-header-green">
+      <i class="bi bi-table"></i> Données par Affection
+      {% if selected_periode %}<span class="badge bg-warning text-dark ms-2">{{ selected_periode }}</span>{% endif %}
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-magal mb-0" id="rapportTable">
+          <thead>
+            <tr>
+              <th>N°</th>
+              <th>Affection / Motif de consultation</th>
+              <th class="text-center">Cas simples</th>
+              <th class="text-center">Hospitalisés</th>
+              <th class="text-center">Évacués</th>
+              <th class="text-center text-danger">Décédés</th>
+              <th class="text-center fw-bold">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set current_cat = '' %}
+            {% for row in rapport %}
+            {% if row.categorie != current_cat %}
+            {% set current_cat = row.categorie %}
+            <tr class="saisie-section-header">
+              <td colspan="7">
+                {% if row.categorie == 'traumatisme' %}Traumatismes et Accidents
+                {% elif row.categorie == 'infectieux' %}Maladies Infectieuses
+                {% elif row.categorie == 'respiratoire' %}Affections Respiratoires
+                {% elif row.categorie == 'digestif' %}Affections Digestives
+                {% elif row.categorie == 'cardiovasculaire' %}Affections Cardiovasculaires
+                {% elif row.categorie == 'mpe' %}Maladies à Potentiel Épidémique (MPE)
+                {% elif row.categorie == 'gynaeco' %}Gynéco-Obstétrique
+                {% elif row.categorie == 'chronique' %}Maladies Chroniques
+                {% else %}Autres Affections{% endif %}
+              </td>
+            </tr>
+            {% endif %}
+            <tr class="{% if row.categorie == 'mpe' %}row-mpe{% endif %}">
+              <td class="text-muted">{{ row.numero }}</td>
+              <td>{{ row.libelle }}</td>
+              <td class="text-center">{{ row.simples or 0 }}</td>
+              <td class="text-center {% if row.hospit > 0 %}text-primary fw-bold{% endif %}">{{ row.hospit or 0 }}</td>
+              <td class="text-center {% if row.evacues > 0 %}text-warning fw-bold{% endif %}">{{ row.evacues or 0 }}</td>
+              <td class="text-center {% if row.decedes > 0 %}text-danger fw-bold{% endif %}">{{ row.decedes or 0 }}</td>
+              <td class="text-center fw-bold text-green">{{ row.total }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr class="row-total">
+              <td colspan="2" class="fw-bold">GRAND TOTAL</td>
+              <td class="text-center fw-bold">{{ rapport | sum(attribute='simples') }}</td>
+              <td class="text-center fw-bold text-primary">{{ rapport | sum(attribute='hospit') }}</td>
+              <td class="text-center fw-bold text-warning">{{ rapport | sum(attribute='evacues') }}</td>
+              <td class="text-center fw-bold text-danger">{{ rapport | sum(attribute='decedes') }}</td>
+              <td class="text-center fw-bold text-green">{{ rapport | sum(attribute='total') }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
