@@ -1,141 +1,214 @@
-# Application de Gestion des Données Médicales — Grand Magal de Touba
-**Région Médicale de Diourbel**
+# 🏥 Gestion des Données Médicales — Grand Magal de Touba
+### Région Médicale de Diourbel · Edition 2025
 
-## Description
-Application web Flask + SQLite pour la surveillance épidémiologique du Grand Magal de Touba.
-
----
-
-## Structure de l'application
-
-```
-magal_medical/
-├── app.py               # Point d'entrée Flask
-├── config.py            # Configuration
-├── extensions.py        # SQLAlchemy, LoginManager
-├── models.py            # Modèles de données + seed
-├── run.py               # Script de démarrage
-├── requirements.txt     # Dépendances Python
-├── routes/
-│   ├── public.py        # Statistiques publiques (sans auth)
-│   ├── auth.py          # Connexion / Déconnexion
-│   ├── admin.py         # Tableau de bord administrateur
-│   └── user.py          # Espace responsable EPS
-├── templates/
-│   ├── base.html        # Template de base (navbar, footer)
-│   ├── auth/            # Login, changement mot de passe
-│   ├── public/          # Page statistiques publiques
-│   ├── admin/           # Dashboard, EPS, Users, Rapports...
-│   └── user/            # Dashboard EPS, Saisie, Fiches
-├── static/
-│   └── css/style.css    # Styles personnalisés (vert Magal)
-└── instance/
-    └── magal_medical.db # Base de données SQLite (auto-créée)
-```
+Application web de surveillance épidémiologique pour le Grand Magal de Touba.  
+Développée avec **Python Flask + PostgreSQL**, déployée sur **Railway**.
 
 ---
 
-## Installation
+## 🌐 Accès en ligne
+
+| Page | URL |
+|------|-----|
+| Statistiques publiques | `https://votre-app.railway.app/statistiques` |
+| Connexion | `https://votre-app.railway.app/auth/login` |
+| Tableau de bord admin | `https://votre-app.railway.app/admin/dashboard` |
+| Espace responsable EPS | `https://votre-app.railway.app/user/dashboard` |
+
+---
+
+## 👥 Niveaux d'accès
+
+### 🔓 Public (sans connexion)
+- Statistiques globales : consultants, hospitalisés, évacués, décès
+- Filtres par période (J-2 → J+3) et par zone/district
+- Graphiques d'évolution et de répartition géographique
+- Top 10 affections + Maladies à Potentiel Épidémique (MPE)
+- Taux de complétude des soumissions en temps réel
+
+### 👨‍⚕️ Responsable EPS — Poste de Santé / Centre de Santé / Hôpital
+- Tableau de bord personnel avec statut des 6 périodes
+- **Saisie de la fiche journalière** (32 affections × 4 colonnes)
+- Calcul automatique des totaux en temps réel
+- Consultation et modification des fiches soumises
+- Visualisation de la fiche détaillée
+
+### 🔐 Administrateur
+- Dashboard global : KPIs, graphiques, complétude par période
+- Gestion des EPS (39 structures pré-chargées)
+- Gestion des utilisateurs et des droits
+- Gestion des éditions (multi-années)
+- **Saisie directe** pour tout EPS
+- **Rapports consolidés** filtrables par période et district
+- Suivi de complétude en temps réel (46 EPS)
+
+---
+
+## 📊 Données de référence (maquette Excel Magal 2025)
+
+### Zones / Districts (10)
+| Zone | Type |
+|------|------|
+| DISTRICT TOUBA | District |
+| HOPITAL NDAMATOU | Hôpital |
+| HOPITAL CH KHADIM | Hôpital |
+| HOP MATLABOUL FAWZAINY | Hôpital |
+| HR DIOURBEL | Hôpital Régional |
+| DISTRICT BAMBEY | District |
+| DISTRICT DIOURBEL | District |
+| DISTRICT MBACKE | District |
+| DISTRICT DAROU MOUSTY | District |
+| DISTRICT GOSSAS | District |
+
+### Périodes de surveillance (6)
+`J-2` → `J-1` → **`J`** (Jour du Magal) → `J+1` → `J+2` → `J+3`
+
+### 32 Affections cataloguées
+| Catégorie | Affections |
+|-----------|-----------|
+| Traumatismes | Coups et blessures, Accidents domestiques, Accidents circulation (auto/moto/charrette), Accident voie publique, Accidents de travail, Autres accidents |
+| Cardiovasculaire | Affections cardiovasculaires (HTA...) |
+| Infectieux | Paludisme confirmé TDR+, Syndrome infectieux |
+| Respiratoire | Affections respiratoires |
+| Digestif | Gastroentérite/Intoxication, Affection appareil digestif |
+| Autres | Bucco-dentaire, ORL, Ophtalmologie, Gynéco-obstétrique, Uro-génital, Dermatologique, Ostéo-articulaire, Neuropsychiatrique, Coups de chaleur, Atteintes neuromusculaires, Maladies chroniques, Autres |
+| **MPE** | **Rougeole, Méningite, PFA, Choléra, COVID-19 suspects/confirmés** |
+
+---
+
+## 🛠 Stack technique
+
+| Composant | Technologie |
+|-----------|-------------|
+| Backend | Python 3.12, Flask 3.0 |
+| ORM | Flask-SQLAlchemy 3.1 |
+| Auth | Flask-Login 0.6 |
+| Base de données | PostgreSQL (Railway) / SQLite (local) |
+| Serveur WSGI | Gunicorn 22.0 |
+| Frontend | Bootstrap 5.3, Chart.js 4.4 |
+| Déploiement | Railway (GitHub intégration) |
+
+---
+
+## 🚀 Déploiement Railway (GitHub → Auto-deploy)
+
+Le dépôt est connecté à Railway. **Chaque `git push` déclenche un redéploiement automatique.**
+
+### Variables d'environnement requises dans Railway
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | Auto-injectée par le service PostgreSQL Railway |
+| `SECRET_KEY` | Clé secrète Flask (générer avec `python -c "import secrets; print(secrets.token_hex(40))"`) |
+| `FLASK_DEBUG` | `False` en production |
+
+### Mettre à jour l'application
+```bash
+git add .
+git commit -m "Description des changements"
+git push origin main   # Railway redéploie automatiquement
+```
+
+### Fichiers de configuration Railway
+```
+railway.json      ← Builder Nixpacks + health check /statistiques
+nixpacks.toml     ← Python 3.12 + pip install
+Procfile          ← gunicorn wsgi:app --workers 2 --bind 0.0.0.0:$PORT
+wsgi.py           ← Point d'entrée WSGI
+```
+
+---
+
+## 💻 Développement local
+
+### Prérequis
+- Python 3.12+
+- pip
+
+### Installation
 
 ```bash
+git clone <votre-repo>
 cd magal_medical
 pip install -r requirements.txt
 python run.py
 ```
 
----
+L'application démarre sur : http://localhost:5000  
+Base de données SQLite créée automatiquement dans `instance/magal_medical.db`
 
-## Accès
-
-| Page | URL |
-|------|-----|
-| Statistiques publiques | http://localhost:5000 |
-| Connexion | http://localhost:5000/auth/login |
-| Dashboard admin | http://localhost:5000/admin/dashboard |
-| Espace EPS | http://localhost:5000/user/dashboard |
-
----
-
-## Comptes par défaut
-
-| Rôle | Identifiant | Mot de passe |
-|------|-------------|--------------|
-| Administrateur | `admin` | `admin2025` |
-| Responsable PS KHAIRA (démo) | `ps_khaira` | `khaira2025` |
+### Variables locales (optionnel)
+Copier `.env.example` en `.env` :
+```
+SECRET_KEY=dev-secret-key-local
+FLASK_DEBUG=True
+```
 
 ---
 
-## Rôles et accès
+## 🔑 Comptes par défaut
 
-### Public (sans connexion)
-- Statistiques globales par période et par district
-- Graphiques de morbidité
-- MPE (Maladies à Potentiel Épidémique)
-- Taux de complétude
+| Identifiant | Mot de passe | Rôle |
+|-------------|--------------|------|
+| `admin` | `admin2025` | Administrateur complet |
+| `ps_khaira` | `khaira2025` | Responsable PS KHAIRA (démo) |
 
-### Responsable EPS (poste_sante / centre_sante / hopital)
-- Saisie de la fiche journalière pour chaque période (J-2 → J+3)
-- 32 affections : cas simples, hospitalisés, évacués, décédés
-- Consultation et modification de ses propres fiches
-- Vue de son tableau de bord personnel
-
-### Administrateur
-- Gestion des EPS (création, modification)
-- Gestion des utilisateurs
-- Gestion des éditions
-- Saisie directe pour tout EPS
-- Rapports consolidés (filtres par période et district)
-- Suivi de la complétude en temps réel
+> ⚠️ **Changer les mots de passe** après le premier déploiement via `/auth/change-password`
 
 ---
 
-## Structure des données (basée sur la maquette Excel)
+## 📁 Structure du projet
 
-### Périodes
-`J-2`, `J-1`, `J` (jour J du Magal), `J+1`, `J+2`, `J+3`
-
-### 32 Affections cataloguées
-1. Coups et blessures
-2. Accidents domestiques
-3. Accidents circulation auto
-4. Accidents circulation Moto
-5. Accident circulation Charrette
-6. Accident voie Publique
-7. Accidents de travail
-8. Autres accidents
-9. Affections cardiovasculaires (HTA...)
-10. Paludisme confirmé (TDR+)
-11. Affections Respiratoires
-12. Gastroentérite / Intoxication
-13. Affection appareil digestif
-14. Affection buco dentaires
-15. Affections ORL
-16. Affections de l'oeil et annexes
-17. Gynéco obstétrique
-18. Affections uro-génitales
-19. Affection dermatologiques
-20. Affections ostéo articulaires
-21. Maladies chroniques (diabète...)
-22. Affections neuropsychiatriques
-23. Syndrome infectieux
-24. Coups de chaleur
-25. Atteintes neuromusculaires
-26. Autres affections à préciser
-27-32. MPE : Rougeole, Méningite, PFA, Choléra, COVID-19 suspects/confirmés
-
-### Zones / Districts
-- HOPITAL NDAMATOU
-- DISTRICT BAMBEY
-- DISTRICT DIOURBEL
-- HR DIOURBEL
-- DISTRICT MBACKE
-- HOP MATLABOUL FAWZAINY
-- DISTRICT DAROU MOUSTY
-- DISTRICT TOUBA (46 EPS)
-- HOPITAL CH KHADIM
-- DISTRICT GOSSAS
+```
+magal_medical/
+├── app.py                    # Factory Flask (create_app)
+├── config.py                 # Config DATABASE_URL (Railway/SQLite)
+├── extensions.py             # SQLAlchemy, LoginManager
+├── models.py                 # Modèles + seed data (32 aff, 39 EPS)
+├── wsgi.py                   # Point d'entrée Gunicorn
+├── run.py                    # Démarrage développement local
+│
+├── routes/
+│   ├── public.py             # Stats publiques (sans auth)
+│   ├── auth.py               # Login/Logout/ChangePassword
+│   ├── admin.py              # Dashboard, EPS, Users, Rapports
+│   └── user.py               # Saisie journalière, Fiches
+│
+├── templates/
+│   ├── base.html             # Layout (navbar, footer, flash)
+│   ├── auth/                 # login.html, change_password.html
+│   ├── public/               # stats.html (graphiques Chart.js)
+│   ├── admin/                # dashboard, eps, users, rapports...
+│   └── user/                 # dashboard, saisie, fiches...
+│
+├── static/css/style.css      # Thème vert Magal
+│
+├── railway.json              # Config Railway
+├── nixpacks.toml             # Build Nixpacks
+├── Procfile                  # Commande Gunicorn
+├── runtime.txt               # python-3.12.7
+├── requirements.txt          # Dépendances Python
+└── instance/                 # SQLite (développement local, ignoré git)
+```
 
 ---
 
-## Technologies
-- **Backend** : Python 3.x, Flask 3.0, Flask-SQLAlchemy,
+## 📋 Modèle de données
+
+```
+Edition (annee, active)
+    └── FicheJournaliere (eps, periode, statut, observations)
+            └── LigneConsultation (affection, cas_simples, hospitalises, evacues, decedes)
+
+District (nom)
+    └── EPS (nom, type: poste_sante|centre_sante|hopital|district)
+            └── User (username, role: admin|responsable)
+
+Affection (numero, libelle, categorie, is_mpe)
+ServiceDiagnostic (eps, edition, periode, labo, radio, echo, scanner, bloc)
+```
+
+---
+
+## 📜 Licence
+
+Usage exclusif — Région Médicale de Diourbel — Grand Magal de Touba 2025
