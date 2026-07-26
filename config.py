@@ -9,15 +9,17 @@ os.makedirs(INSTANCE_DIR, exist_ok=True)
 
 def get_database_url():
     """
-    Heroku fournit DATABASE_URL avec le préfixe 'postgres://'
-    SQLAlchemy >= 1.4 nécessite 'postgresql://'
+    Gère les DATABASE_URL de Railway, Heroku et locaux.
+    - Railway : postgresql://... (correct)
+    - Heroku  : postgres://... (à corriger)
+    - Local   : sqlite:///...
     """
     url = os.environ.get('DATABASE_URL')
     if url:
-        # Corriger le préfixe Heroku
+        # Corriger l'ancien préfixe Heroku postgres:// -> postgresql://
         url = re.sub(r'^postgres://', 'postgresql://', url)
         return url
-    # Fallback local SQLite
+    # Fallback local SQLite pour développement
     return 'sqlite:///' + os.path.join(INSTANCE_DIR, 'magal_medical.db')
 
 
