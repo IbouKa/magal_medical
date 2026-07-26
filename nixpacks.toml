@@ -1,12 +1,7 @@
-# Configuration Nixpacks pour Railway
-[phases.setup]
-nixPkgs = ["python312", "gcc"]
-
-[phases.install]
-cmds = ["python3 -m pip install -r requirements.txt"]
-
-[phases.build]
-cmds = []
+# Railway Nixpacks configuration
+# Python is auto-detected from requirements.txt and runtime.txt
+# Do NOT specify nixPkgs python312 — it lacks pip
+# Nixpacks built-in Python detection includes pip automatically
 
 [start]
 cmd = "gunicorn wsgi:app --workers 2 --bind 0.0.0.0:$PORT --timeout 120 --log-level info"
