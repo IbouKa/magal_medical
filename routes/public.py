@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template, jsonify, request
+from flask import Blueprint, render_template, jsonify, request, redirect, url_for
+from flask_login import current_user
 from sqlalchemy import func
 from models import (
     Edition, District, EPS, Affection,
@@ -17,16 +18,18 @@ def get_edition_active():
 
 @public_bp.route('/')
 def index():
-    return redirect_or_stats()
-
-
-def redirect_or_stats():
-    from flask import redirect, url_for
+    # Rediriger directement les non-admin vers leurs stats filtrées
+    if current_user.is_authenticated and not current_user.is_admin:
+        return redirect(url_for('user.mes_stats'))
     return redirect(url_for('public.stats'))
 
 
 @public_bp.route('/statistiques')
 def stats():
+    # Rediriger les utilisateurs non-admin connectés vers leurs stats filtrées par EPS
+    if current_user.is_authenticated and not current_user.is_admin:
+        return redirect(url_for('user.mes_stats'))
+
     edition = get_edition_active()
     if not edition:
         return render_template('public/stats.html', edition=None, stats={})
@@ -159,12 +162,17 @@ def stats():
 
 @public_bp.route('/api/stats')
 def api_stats():
-    """API JSON pour les statistiques publiques."""
+    """API JSON pour les statistiques — filtrées par EPS pour les non-admin."""
     edition = get_edition_active()
     if not edition:
         return jsonify({'error': 'Aucune édition active'}), 404
 
-    # Totaux par affection
+    # Totaux par affection (filtrés par EPS pour les utilisateurs non-admin connectés)
+    base_filter = [FicheJournaliere.edition_id == edition.id]
+    if current_user.is_authenticated and not current_user.is_admin:
+        if current_user.eps_id:
+            base_filter.append(FicheJournaliere.eps_id == current_user.eps_id)
+
     data = db.session.query(
         Affection.numero,
         Affection.libelle,
@@ -174,7 +182,7 @@ def api_stats():
         func.sum(LigneConsultation.evacues).label('evacues'),
         func.sum(LigneConsultation.decedes).label('decedes'),
     ).join(LigneConsultation).join(FicheJournaliere).filter(
-        FicheJournaliere.edition_id == edition.id
+        *base_filter
     ).group_by(Affection.numero, Affection.libelle, Affection.categorie).all()
 
     result = []
@@ -199,23 +207,32 @@ def api_stats():
 
 @public_bp.route('/api/stats/periodes')
 def api_stats_periodes():
-    """Données par période pour les graphiques."""
+    """Données par période — filtrées par EPS pour les non-admin."""
     edition = get_edition_active()
     if not edition:
         return jsonify({'error': 'Aucune édition active'}), 404
 
+    # Filtre EPS pour les utilisateurs non-admin connectés
+    eps_filter = None
+    if current_user.is_authenticated and not current_user.is_admin and current_user.eps_id:
+        eps_filter = current_user.eps_id
+
     periodes = ['J-2', 'J-1', 'J', 'J+1', 'J+2', 'J+3']
     data = []
     for p in periodes:
+        filters = [
+            FicheJournaliere.edition_id == edition.id,
+            FicheJournaliere.periode == p
+        ]
+        if eps_filter:
+            filters.append(FicheJournaliere.eps_id == eps_filter)
+
         result = db.session.query(
             func.sum(LigneConsultation.cas_simples).label('simples'),
             func.sum(LigneConsultation.hospitalises).label('hospit'),
             func.sum(LigneConsultation.evacues).label('evacues'),
             func.sum(LigneConsultation.decedes).label('decedes'),
-        ).join(FicheJournaliere).filter(
-            FicheJournaliere.edition_id == edition.id,
-            FicheJournaliere.periode == p
-        ).first()
+        ).join(FicheJournaliere).filter(*filters).first()
         data.append({
             'periode': p,
             'simples': result.simples or 0,
