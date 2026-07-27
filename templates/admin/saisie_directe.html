@@ -114,5 +114,22 @@ window.addEventListener('resize', function() {
   if (window.innerWidth < 768) document.body.classList.add('has-sticky-bar');
   else document.body.classList.remove('has-sticky-bar');
 });
+
+// ---- Navigation clavier : Entree passe a l'input suivant ----
+document.getElementById('saisieFrm').addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter') return;
+  var target = e.target;
+  if (!target.classList.contains('saisie-input')) return;
+  e.preventDefault();
+  var inputs = Array.from(document.querySelectorAll('.saisie-input')).filter(function(inp) {
+    var row = inp.closest('tr');
+    return !row || !row.classList.contains('row-hidden');
+  });
+  var idx = inputs.indexOf(target);
+  if (idx !== -1 && idx < inputs.length - 1) {
+    inputs[idx + 1].focus();
+    inputs[idx + 1].select();
+  }
+});
 </script>
 {% endblock %}

@@ -21,6 +21,24 @@ document.querySelectorAll('.saisie-input').forEach(function(inp) {
   inp.addEventListener('focus', function() { this.select(); });
 });
 
+// ---- Navigation clavier : Entree passe a l'input suivant ----
+document.getElementById('saisieFrm').addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter') return;
+  var target = e.target;
+  if (!target.classList.contains('saisie-input')) return;
+  e.preventDefault();
+  // Collecter uniquement les inputs dans des lignes visibles
+  var inputs = Array.from(document.querySelectorAll('.saisie-input')).filter(function(inp) {
+    var row = inp.closest('tr');
+    return !row || !row.classList.contains('row-hidden');
+  });
+  var idx = inputs.indexOf(target);
+  if (idx !== -1 && idx < inputs.length - 1) {
+    inputs[idx + 1].focus();
+    inputs[idx + 1].select();
+  }
+});
+
 // ---- Calcul total par ligne ----
 function updateTotal(id) {
   var s = parseInt(document.getElementById('s_' + id).value) || 0;
