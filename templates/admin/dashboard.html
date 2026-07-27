@@ -62,19 +62,19 @@
       <a href="{{ url_for('admin.completude') }}" class="btn btn-sm btn-light">Voir détail</a>
     </div>
     <div class="card-body">
-      <div class="row g-2">
+      <div class="row g-2 row-cols-3 row-cols-md-6">
         {% for c in stats.completude %}
-        <div class="col-6 col-md-2">
+        <div class="col">
           <div class="text-center mb-1">
             <span class="fw-bold small" style="color:var(--green-dark);">{{ c.periode }}</span>
           </div>
-          <div class="progress" style="height:18px;border-radius:9px;">
+          <div class="progress" style="height:16px;border-radius:8px;">
             <div class="progress-bar {% if c.pct >= 80 %}bg-success{% elif c.pct >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
                  style="width:{{ c.pct }}%">
-              <span class="small fw-bold">{{ c.pct }}%</span>
+              <span style="font-size:.7rem;font-weight:700;">{{ c.pct }}%</span>
             </div>
           </div>
-          <div class="text-center" style="font-size:.72rem;color:#666;">
+          <div class="text-center" style="font-size:.68rem;color:#666;">
             {{ c.nb_soumis }}/{{ c.nb_attendus }}
           </div>
         </div>

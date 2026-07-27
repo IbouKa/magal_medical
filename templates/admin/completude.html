@@ -7,18 +7,20 @@
     {% if edition %}<span class="text-muted fs-5">— {{ edition.annee }}</span>{% endif %}
   </h2>
 
-  <!-- Période selector -->
+  <!-- Période selector — scrollable sur mobile -->
   <div class="card border-0 shadow-sm mb-3">
-    <div class="card-body py-2">
-      <div class="btn-group">
-        {% for p in periodes %}
-        <a href="{{ url_for('admin.completude', periode=p) }}"
-           class="btn btn-sm btn-outline-success periode-btn {% if selected_periode == p %}active{% endif %}">
-          {{ p }}
-        </a>
-        {% endfor %}
+    <div class="card-body py-2 d-flex align-items-center gap-2 flex-wrap">
+      <div style="overflow-x:auto; -webkit-overflow-scrolling:touch; flex-shrink:0;">
+        <div class="btn-group flex-nowrap">
+          {% for p in periodes %}
+          <a href="{{ url_for('admin.completude', periode=p) }}"
+             class="btn btn-sm btn-outline-success periode-btn {% if selected_periode == p %}active{% endif %}">
+            {{ p }}
+          </a>
+          {% endfor %}
+        </div>
       </div>
-      <span class="ms-3 fw-semibold">
+      <span class="fw-semibold small">
         Période : <span class="text-green">{{ selected_periode }}</span>
       </span>
     </div>
@@ -26,30 +28,30 @@
 
   <!-- Stats complétude -->
   <div class="row g-3 mb-3">
-    <div class="col-md-4">
+    <div class="col-6 col-md-4">
       <div class="card border-0 shadow-sm text-center">
-        <div class="card-body">
-          <h1 class="fw-bold text-green">{{ nb_soumis }}</h1>
-          <p class="text-muted mb-0">Structures ayant soumis</p>
+        <div class="card-body py-3">
+          <h2 class="fw-bold text-green mb-1">{{ nb_soumis }}</h2>
+          <p class="text-muted mb-0 small">Structures ayant soumis</p>
         </div>
       </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-6 col-md-4">
       <div class="card border-0 shadow-sm text-center">
-        <div class="card-body">
-          <h1 class="fw-bold text-muted">{{ nb_total }}</h1>
-          <p class="text-muted mb-0">Structures attendues</p>
+        <div class="card-body py-3">
+          <h2 class="fw-bold text-muted mb-1">{{ nb_total }}</h2>
+          <p class="text-muted mb-0 small">Structures attendues</p>
         </div>
       </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-12 col-md-4">
       <div class="card border-0 shadow-sm text-center">
-        <div class="card-body">
-          <h1 class="fw-bold {% if pct >= 80 %}text-success{% elif pct >= 50 %}text-warning{% else %}text-danger{% endif %}">
+        <div class="card-body py-3">
+          <h2 class="fw-bold mb-1 {% if pct >= 80 %}text-success{% elif pct >= 50 %}text-warning{% else %}text-danger{% endif %}">
             {{ pct }}%
-          </h1>
-          <p class="text-muted mb-0">Taux de complétude</p>
-          <div class="progress mt-2" style="height:10px;border-radius:5px;">
+          </h2>
+          <p class="text-muted mb-1 small">Taux de complétude</p>
+          <div class="progress" style="height:10px;border-radius:5px;">
             <div class="progress-bar {% if pct >= 80 %}bg-success{% elif pct >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
                  style="width:{{ pct }}%"></div>
           </div>
@@ -68,32 +70,43 @@
         <table class="table table-magal mb-0">
           <thead>
             <tr>
-              <th>Structure</th><th>Type</th><th>District</th>
-              <th class="text-center">Statut</th><th class="text-center">Action</th>
+              <th>Structure</th>
+              <th class="d-none d-sm-table-cell">Type</th>
+              <th class="d-none d-md-table-cell">District</th>
+              <th class="text-center">Statut</th>
+              <th class="text-center">Action</th>
             </tr>
           </thead>
           <tbody>
             {% for item in data %}
             <tr>
-              <td class="fw-semibold">{{ item.eps.nom }}</td>
-              <td>
+              <td class="fw-semibold">
+                {{ item.eps.nom }}
+                <div class="d-sm-none">
+                  <span class="badge {% if item.eps.type_eps == 'hopital' %}bg-danger{% elif item.eps.type_eps == 'centre_sante' %}bg-primary{% else %}bg-secondary{% endif %} me-1">
+                    {{ item.eps.prefixe }}
+                  </span>
+                  <small class="text-muted">{{ item.eps.district.nom }}</small>
+                </div>
+              </td>
+              <td class="d-none d-sm-table-cell">
                 <span class="badge {% if item.eps.type_eps == 'hopital' %}bg-danger{% elif item.eps.type_eps == 'centre_sante' %}bg-primary{% else %}bg-secondary{% endif %}">
                   {{ item.eps.prefixe }}
                 </span>
               </td>
-              <td class="text-muted small">{{ item.eps.district.nom }}</td>
+              <td class="d-none d-md-table-cell text-muted small">{{ item.eps.district.nom }}</td>
               <td class="text-center">
                 {% if item.soumis %}
-                <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Soumis</span>
+                <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> <span class="d-none d-sm-inline">Soumis</span></span>
                 {% else %}
-                <span class="badge bg-danger"><i class="bi bi-x-circle-fill"></i> En attente</span>
+                <span class="badge bg-danger"><i class="bi bi-x-circle-fill"></i> <span class="d-none d-sm-inline">En attente</span></span>
                 {% endif %}
               </td>
               <td class="text-center">
                 <a href="{{ url_for('admin.saisie_directe', eps_id=item.eps.id, periode=selected_periode) }}"
                    class="btn btn-xs btn-sm btn-outline-success py-0 px-2">
                   <i class="bi bi-pencil"></i>
-                  {% if item.soumis %}Modifier{% else %}Saisir{% endif %}
+                  <span class="d-none d-sm-inline">{% if item.soumis %}Modifier{% else %}Saisir{% endif %}</span>
                 </a>
               </td>
             </tr>

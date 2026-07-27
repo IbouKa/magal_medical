@@ -10,16 +10,18 @@
   <!-- Filtres -->
   <div class="card border-0 shadow-sm mb-3">
     <div class="card-body py-2">
-      <form method="GET" class="row g-2 align-items-end">
+      <form method="GET" class="d-flex flex-wrap gap-3 align-items-end filter-form">
         <div class="col-auto">
           <label class="form-label fw-semibold mb-1 small">Période</label>
-          <div class="btn-group">
-            <a href="{{ url_for('admin.rapports', district=selected_district) }}"
-               class="btn btn-sm btn-outline-success {% if not selected_periode %}active{% endif %}">Toutes</a>
-            {% for p in periodes %}
-            <a href="{{ url_for('admin.rapports', periode=p, district=selected_district) }}"
-               class="btn btn-sm btn-outline-success {% if selected_periode == p %}active{% endif %}">{{ p }}</a>
-            {% endfor %}
+          <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
+            <div class="btn-group flex-nowrap">
+              <a href="{{ url_for('admin.rapports', district=selected_district) }}"
+                 class="btn btn-sm btn-outline-success periode-btn {% if not selected_periode %}active{% endif %}">Toutes</a>
+              {% for p in periodes %}
+              <a href="{{ url_for('admin.rapports', periode=p, district=selected_district) }}"
+                 class="btn btn-sm btn-outline-success periode-btn {% if selected_periode == p %}active{% endif %}">{{ p }}</a>
+              {% endfor %}
+            </div>
           </div>
         </div>
         <div class="col-auto">

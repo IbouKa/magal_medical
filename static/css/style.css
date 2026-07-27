@@ -42,6 +42,7 @@ footer small { font-size: .8rem; opacity: .85; }
   right: 1rem;
   top: 50%;
   transform: translateY(-50%);
+  pointer-events: none;
 }
 
 /* Card headers */
@@ -138,11 +139,17 @@ footer small { font-size: .8rem; opacity: .85; }
 }
 
 /* Responsive table wrapper */
-.table-responsive { border-radius: 8px; overflow: hidden; }
+.table-responsive {
+  border-radius: 8px;
+  overflow: hidden;
+  -webkit-overflow-scrolling: touch;
+}
 
 /* Sidebar / quick nav */
 .quick-nav a {
-  display: flex; align-items: center; gap: .5rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
   padding: .5rem .75rem;
   border-radius: 6px;
   color: var(--green-dark);
@@ -164,17 +171,35 @@ footer small { font-size: .8rem; opacity: .85; }
   border-bottom: 3px solid var(--green-light);
   padding-bottom: .4rem;
   margin-bottom: 1.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .3rem;
 }
 
 /* Status badges */
-.badge-soumis   { background-color: #1976d2; }
-.badge-valide   { background-color: #2e7d32; }
-.badge-brouillon{ background-color: #757575; }
+.badge-soumis    { background-color: #1976d2; }
+.badge-valide    { background-color: #2e7d32; }
+.badge-brouillon { background-color: #757575; }
 
 /* Totals row */
 .row-total {
   background-color: #f0f7f2 !important;
   font-weight: 700;
+}
+
+/* Sticky mobile save bar (hidden on desktop) */
+.mobile-save-bar {
+  display: none;
+}
+
+/* Scroll hint indicator for tables */
+.scroll-hint {
+  display: none;
+  font-size: .75rem;
+  color: var(--green-mid);
+  text-align: right;
+  margin-bottom: .25rem;
 }
 
 /* Animations */
@@ -183,3 +208,319 @@ footer small { font-size: .8rem; opacity: .85; }
   to   { opacity: 1; transform: translateY(0); }
 }
 .fade-in { animation: fadeIn .4s ease forwards; }
+
+
+/* ============================================================
+   RESPONSIVE — Tablettes (< 992px)
+   ============================================================ */
+@media (max-width: 991.98px) {
+  .chart-container {
+    height: 240px;
+  }
+
+  .stat-card .stat-icon {
+    font-size: 2rem;
+  }
+}
+
+
+/* ============================================================
+   RESPONSIVE — Mobile (< 768px)
+   ============================================================ */
+@media (max-width: 767.98px) {
+
+  /* ---- Login ---- */
+  .login-card {
+    margin: 1.5rem auto;
+    border-radius: 10px;
+  }
+  .login-header {
+    padding: 1.5rem 1rem;
+  }
+  .login-header .logo-icon {
+    font-size: 2.2rem;
+  }
+  .login-header h4 {
+    font-size: 1.1rem;
+  }
+
+  /* ---- Navbar brand ---- */
+  .navbar-brand .fw-bold {
+    font-size: .85rem !important;
+  }
+  .navbar-brand div[style] {
+    font-size: .6rem !important;
+  }
+
+  /* ---- Page title ---- */
+  .page-title {
+    font-size: 1.1rem;
+  }
+  .page-title .text-muted.fs-5 {
+    font-size: .9rem !important;
+    width: 100%;
+  }
+  .page-title .badge.fs-6 {
+    font-size: .72rem !important;
+  }
+
+  /* ---- Period selector ---- */
+  .periode-selector-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: .25rem;
+  }
+  .periode-btn {
+    min-width: 58px;
+    font-size: .78rem;
+    padding: .2rem .4rem;
+    white-space: nowrap;
+  }
+  /* Keep btn-group scrollable but not wrapping */
+  .card-body .btn-group {
+    flex-shrink: 0;
+  }
+
+  /* ---- Stats KPI cards ---- */
+  .stat-card .card-body {
+    padding: .75rem !important;
+  }
+  .stat-card .card-body h3 {
+    font-size: 1.35rem;
+  }
+  .stat-card .card-body p.small {
+    font-size: .72rem;
+  }
+  .stat-card .stat-icon {
+    font-size: 1.8rem;
+    right: .5rem;
+  }
+
+  /* ---- Charts ---- */
+  .chart-container {
+    height: 200px;
+  }
+
+  /* ---- Tables ---- */
+  .table-magal td,
+  .table-magal th {
+    padding: .3rem .4rem;
+    font-size: .78rem;
+  }
+  .table-magal thead th {
+    font-size: .74rem;
+  }
+
+  /* ---- Saisie table ---- */
+  .saisie-table input[type="number"] {
+    width: 54px;
+    font-size: .78rem;
+  }
+  .saisie-table .affection-label {
+    max-width: 160px;
+    font-size: .78rem;
+  }
+  .scroll-hint {
+    display: block;
+  }
+
+  /* ---- Filter forms (rapports, stats) ---- */
+  .filter-form {
+    flex-direction: column;
+    gap: .75rem;
+  }
+  .filter-form .col-auto {
+    width: 100%;
+  }
+  .filter-form .btn-group {
+    width: 100%;
+    overflow-x: auto;
+    display: flex;
+    flex-wrap: nowrap;
+  }
+  .filter-form select.form-select {
+    width: 100%;
+  }
+
+  /* ---- Card headers ---- */
+  .card-header,
+  .card-header-green {
+    font-size: .85rem;
+    padding: .6rem .875rem;
+  }
+  .card-header .btn-sm,
+  .card-header-green .btn-sm {
+    font-size: .72rem;
+    padding: .15rem .45rem;
+  }
+
+  /* ---- Card body default padding ---- */
+  .card-body {
+    padding: 1rem;
+  }
+
+  /* ---- Completude progress section ---- */
+  .col-6.col-md-2 .fw-bold.small {
+    font-size: .72rem;
+  }
+
+  /* ---- User dashboard period cards ---- */
+  .col-6.col-md-4.col-lg-2 .card-body {
+    padding: .5rem !important;
+  }
+  .col-6.col-md-4.col-lg-2 .fs-5 {
+    font-size: .95rem !important;
+  }
+  .col-6.col-md-4.col-lg-2 .fs-4 {
+    font-size: 1.05rem !important;
+  }
+  .col-6.col-md-4.col-lg-2 .btn-sm {
+    font-size: .68rem;
+    padding: .15rem .3rem;
+  }
+
+  /* ---- Quick nav ---- */
+  .quick-nav a {
+    font-size: .82rem;
+    padding: .4rem .6rem;
+  }
+
+  /* ---- Action buttons ---- */
+  .d-flex.gap-2 .btn-lg {
+    padding: .55rem 1rem;
+    font-size: .875rem;
+  }
+
+  /* ---- Alert ---- */
+  .alert {
+    font-size: .875rem;
+    padding: .6rem .875rem;
+  }
+
+  /* ---- Footer ---- */
+  footer.bg-green-dark small {
+    font-size: .7rem;
+  }
+  footer .mx-2 {
+    display: none;
+  }
+
+  /* ---- Main container ---- */
+  .container-fluid.px-3 {
+    padding-left: .75rem !important;
+    padding-right: .75rem !important;
+  }
+
+  /* ---- Sticky save bar on saisie page ---- */
+  .mobile-save-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    background: white;
+    border-top: 2px solid var(--green-light);
+    padding: .6rem 1rem;
+    gap: .5rem;
+    box-shadow: 0 -4px 12px rgba(0,0,0,.12);
+  }
+  .mobile-save-bar .btn {
+    flex: 1;
+  }
+  /* Add padding at the bottom of the page to avoid overlap with sticky bar */
+  body.has-sticky-bar main {
+    padding-bottom: 70px;
+  }
+}
+
+
+/* ============================================================
+   RESPONSIVE — Très petit mobile (< 480px)
+   ============================================================ */
+@media (max-width: 479.98px) {
+
+  /* ---- Login ---- */
+  .login-card {
+    margin: .75rem;
+    width: calc(100% - 1.5rem);
+  }
+  .login-header {
+    padding: 1.2rem .75rem;
+  }
+
+  /* ---- Page title ---- */
+  .page-title {
+    font-size: .95rem;
+  }
+
+  /* ---- Saisie inputs ---- */
+  .saisie-table input[type="number"] {
+    width: 46px;
+    font-size: .72rem;
+    padding: .15rem .2rem;
+  }
+  .saisie-table .affection-label {
+    max-width: 120px;
+    font-size: .72rem;
+  }
+
+  /* ---- Hide decorative background icon on xs ---- */
+  .stat-card .stat-icon {
+    display: none;
+  }
+
+  /* ---- Charts ---- */
+  .chart-container {
+    height: 175px;
+  }
+
+  /* ---- Distrib/legend on doughnut chart ---- */
+  .chart-container canvas {
+    max-height: 175px;
+  }
+
+  /* ---- Period buttons compact ---- */
+  .periode-btn {
+    min-width: 46px;
+    font-size: .72rem;
+    padding: .15rem .3rem;
+  }
+
+  /* ---- Navbar ---- */
+  .navbar-brand .fw-bold {
+    font-size: .78rem !important;
+  }
+
+  /* ---- Card body padding ---- */
+  .card-body {
+    padding: .75rem;
+  }
+}
+
+
+/* ============================================================
+   Print styles
+   ============================================================ */
+@media print {
+  .navbar,
+  .mobile-save-bar,
+  .scroll-hint,
+  .btn-group.d-print-none,
+  footer {
+    display: none !important;
+  }
+  .container-fluid {
+    padding: 0 !important;
+  }
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
+  .table-magal thead th {
+    background-color: #333 !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

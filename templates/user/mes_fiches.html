@@ -10,52 +10,55 @@
   {% if not fiches %}
   <div class="alert alert-info">
     <i class="bi bi-info-circle-fill"></i>
-    Aucune fiche soumise pour cette édition.
-    <a href="{{ url_for('user.saisie') }}" class="alert-link">Saisir la première fiche</a>
+    Aucune fiche soumise pour cette edition.
+    <a href="{{ url_for('user.saisie') }}" class="alert-link">Saisir la premiere fiche</a>
   </div>
   {% else %}
   <div class="card border-0 shadow-sm">
     <div class="card-header card-header-green">
       <i class="bi bi-list-ul"></i>
-      Fiches de l'édition {{ edition.annee if edition else '' }} — {{ fiches|length }} / 6 périodes
+      Fiches de l'edition {{ edition.annee if edition else '' }} &mdash; {{ fiches|length }} / 6 periodes
     </div>
     <div class="card-body p-0">
       <div class="table-responsive">
         <table class="table table-magal mb-0">
           <thead>
             <tr>
-              <th>Période</th>
-              <th class="text-center">Total Consultants</th>
-              <th class="text-center">Hospitalisés</th>
-              <th class="text-center">Évacués</th>
-              <th class="text-center text-danger">Décédés</th>
-              <th>Date saisie</th>
-              <th>Saisi par</th>
+              <th>Periode</th>
+              <th class="text-center">Consultants</th>
+              <th class="text-center d-none d-sm-table-cell">Hospitalises</th>
+              <th class="text-center d-none d-md-table-cell">Evacues</th>
+              <th class="text-center d-none d-md-table-cell text-danger">Decedes</th>
+              <th class="d-none d-lg-table-cell">Date saisie</th>
+              <th class="d-none d-lg-table-cell">Saisi par</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {% for f in fiches %}
             <tr>
-              <td><span class="badge bg-success fs-6">{{ f.periode }}</span></td>
+              <td>
+                <span class="badge bg-success fs-6">{{ f.periode }}</span>
+                <div class="d-lg-none text-muted" style="font-size:.7rem;">{{ f.date_saisie.strftime('%d/%m %H:%M') }}</div>
+              </td>
               <td class="text-center fw-bold text-green">{{ f.get_total_consultants() }}</td>
-              <td class="text-center {% if f.get_total_hospitalises() > 0 %}text-primary fw-bold{% endif %}">
+              <td class="text-center d-none d-sm-table-cell {% if f.get_total_hospitalises() > 0 %}text-primary fw-bold{% endif %}">
                 {{ f.get_total_hospitalises() }}
               </td>
-              <td class="text-center {% if f.get_total_evacues() > 0 %}text-warning fw-bold{% endif %}">
+              <td class="text-center d-none d-md-table-cell {% if f.get_total_evacues() > 0 %}text-warning fw-bold{% endif %}">
                 {{ f.get_total_evacues() }}
               </td>
-              <td class="text-center {% if f.get_total_decedes() > 0 %}text-danger fw-bold{% endif %}">
+              <td class="text-center d-none d-md-table-cell {% if f.get_total_decedes() > 0 %}text-danger fw-bold{% endif %}">
                 {{ f.get_total_decedes() }}
               </td>
-              <td class="text-muted small">{{ f.date_saisie.strftime('%d/%m/%Y %H:%M') }}</td>
-              <td class="small">{{ f.saisi_par or '-' }}</td>
+              <td class="text-muted small d-none d-lg-table-cell">{{ f.date_saisie.strftime('%d/%m/%Y %H:%M') }}</td>
+              <td class="small d-none d-lg-table-cell">{{ f.saisi_par or '-' }}</td>
               <td>
                 <a href="{{ url_for('user.voir_fiche', fiche_id=f.id) }}" class="btn btn-sm btn-outline-info py-0">
-                  <i class="bi bi-eye"></i> Voir
+                  <i class="bi bi-eye"></i> <span class="d-none d-sm-inline">Voir</span>
                 </a>
                 <a href="{{ url_for('user.saisie', periode=f.periode) }}" class="btn btn-sm btn-outline-warning py-0 ms-1">
-                  <i class="bi bi-pencil"></i> Modifier
+                  <i class="bi bi-pencil"></i> <span class="d-none d-sm-inline">Modifier</span>
                 </a>
               </td>
             </tr>

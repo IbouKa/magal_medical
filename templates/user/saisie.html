@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Saisie — {{ selected_periode }}{% endblock %}
+
 {% block content %}
 <div class="container-fluid px-3">
   <h2 class="page-title">
@@ -7,17 +8,21 @@
     <small class="text-muted fs-5">{{ eps.nom }}</small>
   </h2>
 
-  <!-- Sélecteur de période -->
+  <!-- Selecteur de periode scrollable sur mobile -->
   <div class="card border-0 shadow-sm mb-3">
-    <div class="card-body py-2 d-flex align-items-center gap-3 flex-wrap">
-      <div class="btn-group">
-        {% for p in periodes %}
-        <a href="{{ url_for('user.saisie', periode=p) }}"
-           class="btn btn-sm btn-outline-success periode-btn {% if selected_periode == p %}active{% endif %}">{{ p }}</a>
-        {% endfor %}
+    <div class="card-body py-2 d-flex align-items-center gap-2 flex-wrap">
+      <div class="periode-selector-wrap" style="overflow-x:auto; -webkit-overflow-scrolling:touch; flex-shrink:0;">
+        <div class="btn-group flex-nowrap">
+          {% for p in periodes %}
+          <a href="{{ url_for('user.saisie', periode=p) }}"
+             class="btn btn-sm btn-outline-success periode-btn {% if selected_periode == p %}active{% endif %}">{{ p }}</a>
+          {% endfor %}
+        </div>
       </div>
       {% if fiche %}
-      <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Fiche existante — {{ fiche.date_saisie.strftime('%d/%m %H:%M') }}</span>
+      <span class="badge bg-success">
+        <i class="bi bi-check-circle-fill"></i> Fiche existante &mdash; {{ fiche.date_saisie.strftime('%d/%m %H:%M') }}
+      </span>
       {% else %}
       <span class="badge bg-secondary"><i class="bi bi-pencil"></i> Nouvelle fiche</span>
       {% endif %}
@@ -27,24 +32,32 @@
   <form method="POST" id="saisieFrm">
     <input type="hidden" name="periode" value="{{ selected_periode }}">
     <div class="card border-0 shadow-sm mb-3">
-      <div class="card-header card-header-green d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-table"></i> {{ eps.nom }} — Période {{ selected_periode }} — Edition {{ edition.annee }}</span>
+      <div class="card-header card-header-green d-flex justify-content-between align-items-center flex-wrap gap-1">
+        <span class="small">
+          <i class="bi bi-table"></i>
+          {{ eps.nom }} &mdash; {{ selected_periode }} &mdash; Edition {{ edition.annee }}
+        </span>
         <button type="button" class="btn btn-sm btn-light" onclick="clearAll()">
-          <i class="bi bi-eraser"></i> Effacer tout
+          <i class="bi bi-eraser"></i>
+          <span class="d-none d-sm-inline">Effacer tout</span>
         </button>
       </div>
       <div class="card-body p-0">
+        <!-- Indication de scroll visible uniquement sur mobile -->
+        <div class="scroll-hint px-2 pt-1 text-end">
+          <i class="bi bi-arrow-left-right"></i> Glissez pour voir toutes les colonnes
+        </div>
         <div class="table-responsive">
           <table class="table table-magal saisie-table mb-0">
             <thead>
               <tr>
                 <th style="width:28px;">N°</th>
                 <th>Affection / Motif de consultation</th>
-                <th class="text-center" style="width:90px;">Cas simples</th>
-                <th class="text-center" style="width:90px;">Hospitalisés</th>
-                <th class="text-center" style="width:90px;">Évacués</th>
-                <th class="text-center text-danger" style="width:90px;">Décédés</th>
-                <th class="text-center" style="width:70px;">Total</th>
+                <th class="text-center" style="min-width:70px;">Cas simples</th>
+                <th class="text-center" style="min-width:70px;">Hospitalisés</th>
+                <th class="text-center" style="min-width:70px;">Évacués</th>
+                <th class="text-center text-danger" style="min-width:70px;">Décédés</th>
+                <th class="text-center" style="min-width:60px;">Total</th>
               </tr>
             </thead>
             <tbody>
@@ -73,25 +86,25 @@
                 <td class="text-center">
                   <input type="number" id="s_{{ aff.id }}" name="simples_{{ aff.id }}" min="0"
                          value="{{ lg.cas_simples if lg else 0 }}"
-                         class="form-control form-control-sm saisie-input" style="width:70px;"
+                         class="form-control form-control-sm saisie-input"
                          oninput="updateTotal({{ aff.id }})">
                 </td>
                 <td class="text-center">
                   <input type="number" id="h_{{ aff.id }}" name="hospit_{{ aff.id }}" min="0"
                          value="{{ lg.hospitalises if lg else 0 }}"
-                         class="form-control form-control-sm saisie-input" style="width:70px;"
+                         class="form-control form-control-sm saisie-input"
                          oninput="updateTotal({{ aff.id }})">
                 </td>
                 <td class="text-center">
                   <input type="number" id="e_{{ aff.id }}" name="evacues_{{ aff.id }}" min="0"
                          value="{{ lg.evacues if lg else 0 }}"
-                         class="form-control form-control-sm saisie-input" style="width:70px;"
+                         class="form-control form-control-sm saisie-input"
                          oninput="updateTotal({{ aff.id }})">
                 </td>
                 <td class="text-center">
                   <input type="number" id="d_{{ aff.id }}" name="decedes_{{ aff.id }}" min="0"
                          value="{{ lg.decedes if lg else 0 }}"
-                         class="form-control form-control-sm saisie-input" style="width:70px;"
+                         class="form-control form-control-sm saisie-input"
                          oninput="updateTotal({{ aff.id }})">
                 </td>
                 <td class="text-center fw-bold text-green" id="tot_{{ aff.id }}">
@@ -109,11 +122,12 @@
       <div class="card-body">
         <label class="form-label fw-semibold">Observations / Commentaires</label>
         <textarea name="observations" class="form-control" rows="2"
-                  placeholder="Signaler tout événement particulier...">{{ fiche.observations if fiche else '' }}</textarea>
+                  placeholder="Signaler tout evenement particulier...">{{ fiche.observations if fiche else '' }}</textarea>
       </div>
     </div>
 
-    <div class="d-flex gap-2 mb-4">
+    <!-- Boutons visibles sur desktop, caches sur mobile (remplacés par la barre fixe) -->
+    <div class="d-flex gap-2 mb-4 d-none d-md-flex">
       <button type="submit" class="btn btn-success btn-lg px-5">
         <i class="bi bi-save2-fill"></i> Enregistrer la fiche
       </button>
@@ -121,18 +135,42 @@
         <i class="bi bi-arrow-left"></i> Retour
       </a>
     </div>
+
+    <!-- Barre de sauvegarde fixe visible uniquement sur mobile -->
+    <div class="mobile-save-bar">
+      <button type="submit" class="btn btn-success">
+        <i class="bi bi-save2-fill"></i> Enregistrer
+      </button>
+      <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Retour
+      </a>
+    </div>
+
   </form>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+// Ajouter padding body pour la barre fixe sur mobile
+if (window.innerWidth < 768) {
+  document.body.classList.add('has-sticky-bar');
+}
+window.addEventListener('resize', function() {
+  if (window.innerWidth < 768) {
+    document.body.classList.add('has-sticky-bar');
+  } else {
+    document.body.classList.remove('has-sticky-bar');
+  }
+});
+
 function updateTotal(id) {
   var s = parseInt(document.getElementById('s_' + id).value) || 0;
   var h = parseInt(document.getElementById('h_' + id).value) || 0;
   var e = parseInt(document.getElementById('e_' + id).value) || 0;
   document.getElementById('tot_' + id).textContent = s + h + e;
 }
+
 function clearAll() {
   if (!confirm('Effacer toutes les valeurs ?')) return;
   document.querySelectorAll('.saisie-input').forEach(function(inp) {

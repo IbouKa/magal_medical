@@ -13,21 +13,34 @@
       <div class="table-responsive">
         <table class="table table-magal mb-0">
           <thead>
-            <tr><th>Code</th><th>Nom</th><th>Type</th><th>District</th><th>Responsable</th><th class="text-center">Actif</th><th>Actions</th></tr>
+            <tr>
+              <th class="d-none d-md-table-cell">Code</th>
+              <th>Nom</th>
+              <th>Type</th>
+              <th class="d-none d-sm-table-cell">District</th>
+              <th class="d-none d-lg-table-cell">Responsable</th>
+              <th class="text-center d-none d-sm-table-cell">Actif</th>
+              <th>Actions</th>
+            </tr>
           </thead>
           <tbody>
             {% for eps in eps_list %}
             <tr class="{% if not eps.actif %}table-secondary{% endif %}">
-              <td class="text-muted small">{{ eps.code or '-' }}</td>
-              <td class="fw-semibold">{{ eps.nom }}</td>
+              <td class="text-muted small d-none d-md-table-cell">{{ eps.code or '-' }}</td>
+              <td class="fw-semibold">
+                {{ eps.nom }}
+                <div class="d-sm-none">
+                  <small class="text-muted">{{ eps.district.nom }}</small>
+                </div>
+              </td>
               <td>
                 <span class="badge {% if eps.type_eps == 'hopital' %}bg-danger{% elif eps.type_eps == 'centre_sante' %}bg-primary{% elif eps.type_eps == 'district' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
                   {{ eps.type_label }}
                 </span>
               </td>
-              <td class="small">{{ eps.district.nom }}</td>
-              <td class="small">{{ eps.responsable or '-' }}</td>
-              <td class="text-center">
+              <td class="small d-none d-sm-table-cell">{{ eps.district.nom }}</td>
+              <td class="small d-none d-lg-table-cell">{{ eps.responsable or '-' }}</td>
+              <td class="text-center d-none d-sm-table-cell">
                 {% if eps.actif %}<i class="bi bi-check-circle-fill text-success"></i>
                 {% else %}<i class="bi bi-x-circle-fill text-danger"></i>{% endif %}
               </td>
