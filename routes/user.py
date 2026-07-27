@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
 from functools import wraps
 from datetime import datetime
@@ -166,12 +166,11 @@ def mes_fiches():
 def voir_fiche(fiche_id):
     fiche = db.session.get(FicheJournaliere, fiche_id)
     if not fiche:
-        flash("Fiche introuvable.", "danger")
-        return redirect(url_for('user.mes_fiches'))
+        abort(404)
 
+    # Strict ownership check — un non-admin ne peut voir que les fiches de son EPS
     if not current_user.is_admin and fiche.eps_id != current_user.eps_id:
-        flash("Acces non autorise.", "danger")
-        return redirect(url_for('user.mes_fiches'))
+        abort(403)
 
     affections = Affection.query.filter_by(actif=True).order_by(Affection.numero).all()
     lignes_map = {l.affection_id: l for l in fiche.lignes}
@@ -180,3 +179,109 @@ def voir_fiche(fiche_id):
                            fiche=fiche,
                            affections=affections,
                            lignes_map=lignes_map)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# STATISTIQUES — filtrées par EPS (structure de l'utilisateur)
+# ─────────────────────────────────────────────────────────────────────────────
+@user_bp.route('/mes-stats')
+@login_required
+@user_required
+def mes_stats():
+    edition = get_edition_active()
+    eps = current_user.eps
+    if not eps:
+        flash("Aucun EPS associe a votre compte.", "warning")
+        return redirect(url_for('user.dashboard'))
+
+    total_simples = total_hospit = total_evacues = total_decedes = 0
+    total_consultants = 0
+    periode_data = []
+    top_affections = []
+    mpe_data = []
+
+    if edition:
+        # Totaux globaux pour cet EPS
+        result = db.session.query(
+            func.sum(LigneConsultation.cas_simples),
+            func.sum(LigneConsultation.hospitalises),
+            func.sum(LigneConsultation.evacues),
+            func.sum(LigneConsultation.decedes)
+        ).join(FicheJournaliere).filter(
+            FicheJournaliere.eps_id == eps.id,
+            FicheJournaliere.edition_id == edition.id
+        ).first()
+
+        total_simples  = result[0] or 0
+        total_hospit   = result[1] or 0
+        total_evacues  = result[2] or 0
+        total_decedes  = result[3] or 0
+        total_consultants = total_simples + total_hospit + total_evacues
+
+        # Données par période pour cet EPS
+        for p in PERIODES:
+            q = db.session.query(
+                func.sum(LigneConsultation.cas_simples + LigneConsultation.hospitalises + LigneConsultation.evacues),
+                func.sum(LigneConsultation.decedes)
+            ).join(FicheJournaliere).filter(
+                FicheJournaliere.eps_id == eps.id,
+                FicheJournaliere.edition_id == edition.id,
+                FicheJournaliere.periode == p
+            ).first()
+            total_p   = q[0] or 0
+            decedes_p = q[1] or 0
+            fiche_p = FicheJournaliere.query.filter_by(
+                eps_id=eps.id, edition_id=edition.id, periode=p
+            ).first()
+            periode_data.append({
+                'periode': p,
+                'total': total_p,
+                'decedes': decedes_p,
+                'soumis': fiche_p is not None,
+                'fiche_id': fiche_p.id if fiche_p else None
+            })
+
+        # Top 10 affections pour cet EPS
+        top_affections = db.session.query(
+            Affection.libelle,
+            func.sum(
+                LigneConsultation.cas_simples + LigneConsultation.hospitalises + LigneConsultation.evacues
+            ).label('total')
+        ).join(LigneConsultation).join(FicheJournaliere).filter(
+            FicheJournaliere.eps_id == eps.id,
+            FicheJournaliere.edition_id == edition.id
+        ).group_by(Affection.libelle).order_by(
+            func.sum(
+                LigneConsultation.cas_simples + LigneConsultation.hospitalises + LigneConsultation.evacues
+            ).desc()
+        ).limit(10).all()
+
+        # MPE pour cet EPS
+        mpe_data = db.session.query(
+            Affection.libelle,
+            func.sum(
+                LigneConsultation.cas_simples + LigneConsultation.hospitalises + LigneConsultation.evacues
+            ).label('total'),
+            func.sum(LigneConsultation.decedes).label('decedes')
+        ).join(LigneConsultation).join(FicheJournaliere).filter(
+            FicheJournaliere.eps_id == eps.id,
+            FicheJournaliere.edition_id == edition.id,
+            Affection.is_mpe == True
+        ).group_by(Affection.libelle).all()
+
+    stats_data = {
+        'total_consultants': total_consultants,
+        'total_simples': total_simples,
+        'total_hospit': total_hospit,
+        'total_evacues': total_evacues,
+        'total_decedes': total_decedes,
+        'top_affections': top_affections,
+        'periode_data': periode_data,
+        'mpe_data': mpe_data,
+    }
+
+    return render_template('user/mes_stats.html',
+                           eps=eps,
+                           edition=edition,
+                           stats=stats_data,
+                           periodes=PERIODES)
