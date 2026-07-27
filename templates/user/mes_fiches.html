@@ -14,19 +14,19 @@
     <a href="{{ url_for('user.saisie') }}" class="alert-link">Saisir la premiere fiche</a>
   </div>
   {% else %}
-  <div class="card border-0 shadow-sm">
-    <div class="card-header card-header-green">
-      <i class="bi bi-list-ul"></i>
-      Fiches de l'edition {{ edition.annee if edition else '' }} &mdash; {{ fiches|length }} / 6 periodes
+    <div class="card border-0 shadow-sm">
+    <div class="card-header card-header-green d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <span>
+        <i class="bi bi-list-ul"></i>
+        Fiches de l'edition {{ edition.annee if edition else '' }} &mdash; {{ fiches|length }} / 6 periodes
+      </span>
+      <a href="{{ url_for('user.export_fiches_excel') }}"
+         class="btn btn-sm btn-success d-inline-flex align-items-center gap-1"
+         title="Télécharger toutes mes fiches au format Excel">
+        <i class="bi bi-file-earmark-excel-fill"></i>
+        <span>Exporter Excel</span>
+      </a>
     </div>
-    <div class="card-body p-0 table-stack-wrap">
-      <div class="table-responsive">
-        <table class="table table-magal table-stack mb-0">
-          <thead>
-            <tr>
-              <th>Periode</th>
-              <th class="text-center">Consultants</th>
-              <th class="text-center">Hospitalises</th>
               <th class="text-center">Evacues</th>
               <th class="text-center text-danger">Decedes</th>
               <th>Date saisie</th>

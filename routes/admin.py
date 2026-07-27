@@ -1,7 +1,12 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+import io
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, send_file
 from flask_login import login_required, current_user
 from functools import wraps
+from datetime import datetime
 from sqlalchemy import func
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
 from models import (
     User, District, EPS, Affection, Edition,
     FicheJournaliere, LigneConsultation, ServiceDiagnostic, Completude
@@ -451,3 +456,137 @@ def api_completude_data():
         result[p] = {'nb': nb, 'total': nb_eps,
                      'pct': round(nb / nb_eps * 100, 1) if nb_eps > 0 else 0}
     return jsonify(result)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# EXPORT EXCEL — Rapport consolidé (format plat)
+# Colonnes : N° | District | Période | Consultants | Cas simples |
+#            hospitalisés | Evacuées | décédés | Structures pps/CS | Edition
+# Respecte les filtres période et district actifs sur la page Rapports
+# ─────────────────────────────────────────────────────────────────────────────
+@admin_bp.route('/rapports/export-excel')
+@login_required
+@admin_required
+def export_rapport_excel():
+    edition = get_edition_active()
+    if not edition:
+        flash("Aucune edition active.", "warning")
+        return redirect(url_for('admin.rapports'))
+
+    selected_periode = request.args.get('periode', '')
+    selected_district = request.args.get('district', '')
+
+    # ── Requête : une ligne par (fiche × affection) ───────────
+    q = db.session.query(
+        District.nom.label('district'),
+        FicheJournaliere.periode,
+        Affection.libelle,
+        LigneConsultation.cas_simples,
+        LigneConsultation.hospitalises,
+        LigneConsultation.evacues,
+        LigneConsultation.decedes,
+        EPS.nom.label('eps_nom'),
+    ).select_from(LigneConsultation)\
+     .join(FicheJournaliere, LigneConsultation.fiche_id == FicheJournaliere.id)\
+     .join(Affection, LigneConsultation.affection_id == Affection.id)\
+     .join(EPS, FicheJournaliere.eps_id == EPS.id)\
+     .join(District, EPS.district_id == District.id)\
+     .filter(FicheJournaliere.edition_id == edition.id)
+
+    if selected_periode:
+        q = q.filter(FicheJournaliere.periode == selected_periode)
+    if selected_district:
+        q = q.filter(EPS.district_id == int(selected_district))
+
+    q = q.order_by(District.nom, EPS.nom, FicheJournaliere.periode, Affection.numero)
+    rows = q.all()
+
+    if not rows:
+        flash("Aucune donnee a exporter avec ces filtres.", "info")
+        return redirect(url_for('admin.rapports',
+                                periode=selected_periode,
+                                district=selected_district))
+
+    # ── Styles ───────────────────────────────────────────────
+    hdr_font   = Font(bold=True, size=10, color='1F3D1F')
+    hdr_fill   = PatternFill('solid', fgColor='D5E8D4')
+    thin       = Side(style='thin', color='AAAAAA')
+    brd        = Border(left=thin, right=thin, top=thin, bottom=thin)
+    ac         = Alignment(horizontal='center', vertical='center')
+    al         = Alignment(horizontal='left',   vertical='center')
+    fill_alt   = PatternFill('solid', fgColor='F5F5F5')
+    fill_white = PatternFill('solid', fgColor='FFFFFF')
+
+    wb  = Workbook()
+    ws  = wb.active
+    ws.title = 'Rapport'
+
+    # ── En-têtes ─────────────────────────────────────────────
+    headers = ['N°', 'District', 'Période', 'Consultants',
+               'Cas simples', 'hospitalisés', 'Evacuées', 'décédés',
+               'Structures pps/CS', 'Edition']
+    for col, h in enumerate(headers, 1):
+        c = ws.cell(row=1, column=col, value=h)
+        c.font      = hdr_font
+        c.fill      = hdr_fill
+        c.border    = brd
+        c.alignment = ac
+    ws.row_dimensions[1].height = 20
+
+    # ── Données ──────────────────────────────────────────────
+    for row_idx, r in enumerate(rows, 2):
+        cas_simples  = r.cas_simples  or 0
+        hospitalises = r.hospitalises or 0
+        evacues      = r.evacues      or 0
+        decedes      = r.decedes      or 0
+
+        row_fill = fill_alt if row_idx % 2 == 0 else fill_white
+        values   = [row_idx - 1, r.district, r.periode, r.libelle,
+                    cas_simples, hospitalises, evacues, decedes,
+                    r.eps_nom, edition.annee]
+
+        for col, val in enumerate(values, 1):
+            c = ws.cell(row=row_idx, column=col, value=val)
+            c.border = brd
+            c.fill   = row_fill
+
+            if col in (1, 3, 5, 6, 7, 8, 10):
+                c.alignment = ac
+            else:
+                c.alignment = al
+
+            if col == 4:
+                c.font = Font(size=10, bold=True)
+            elif col == 8 and decedes > 0:
+                c.font = Font(size=10, bold=True, color='CC0000')
+            else:
+                c.font = Font(size=10)
+
+        ws.row_dimensions[row_idx].height = 16
+
+    # ── Largeurs de colonnes ──────────────────────────────────
+    col_widths = [6, 22, 10, 44, 13, 15, 13, 12, 26, 10]
+    for col, w in enumerate(col_widths, 1):
+        ws.column_dimensions[get_column_letter(col)].width = w
+
+    ws.freeze_panes = 'A2'
+
+    # ── Génération du fichier ─────────────────────────────────
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    suffix = ''
+    if selected_periode:
+        suffix += f'_{selected_periode}'
+    if selected_district:
+        d = District.query.get(int(selected_district))
+        suffix += f'_{d.nom.replace(" ", "_")}' if d else f'_dist{selected_district}'
+
+    filename = f'rapport_magal_{edition.annee}{suffix}.xlsx'
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=filename
+    )

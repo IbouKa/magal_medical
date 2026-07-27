@@ -38,6 +38,14 @@
             <i class="bi bi-printer"></i> Imprimer
           </button>
         </div>
+        <div class="col-auto">
+          <a href="{{ url_for('admin.export_rapport_excel', periode=selected_periode, district=selected_district) }}"
+             class="btn btn-sm btn-success d-inline-flex align-items-center gap-1"
+             title="Exporter le rapport au format Excel (filtres actifs)">
+            <i class="bi bi-file-earmark-excel-fill"></i>
+            <span>Exporter Excel</span>
+          </a>
+        </div>
       </form>
     </div>
   </div>
