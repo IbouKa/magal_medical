@@ -48,17 +48,17 @@
       <i class="bi bi-table"></i> Données par Affection
       {% if selected_periode %}<span class="badge bg-warning text-dark ms-2">{{ selected_periode }}</span>{% endif %}
     </div>
-    <div class="card-body p-0">
+    <div class="card-body p-0 table-stack-wrap">
       <div class="table-responsive">
-        <table class="table table-magal mb-0" id="rapportTable">
+        <table class="table table-magal table-stack mb-0" id="rapportTable">
           <thead>
             <tr>
               <th>N°</th>
               <th>Affection / Motif de consultation</th>
-              <th class="text-center">Cas simples</th>
-              <th class="text-center">Hospitalisés</th>
-              <th class="text-center">Évacués</th>
-              <th class="text-center text-danger">Décédés</th>
+              <th class="text-center">Simples</th>
+              <th class="text-center">Hospit.</th>
+              <th class="text-center">Evacues</th>
+              <th class="text-center text-danger">Decedes</th>
               <th class="text-center fw-bold">Total</th>
             </tr>
           </thead>
@@ -74,21 +74,21 @@
                 {% elif row.categorie == 'respiratoire' %}Affections Respiratoires
                 {% elif row.categorie == 'digestif' %}Affections Digestives
                 {% elif row.categorie == 'cardiovasculaire' %}Affections Cardiovasculaires
-                {% elif row.categorie == 'mpe' %}Maladies à Potentiel Épidémique (MPE)
-                {% elif row.categorie == 'gynaeco' %}Gynéco-Obstétrique
+                {% elif row.categorie == 'mpe' %}Maladies a Potentiel Epidemique (MPE)
+                {% elif row.categorie == 'gynaeco' %}Gyneco-Obstetrique
                 {% elif row.categorie == 'chronique' %}Maladies Chroniques
                 {% else %}Autres Affections{% endif %}
               </td>
             </tr>
             {% endif %}
             <tr class="{% if row.categorie == 'mpe' %}row-mpe{% endif %}">
-              <td class="text-muted">{{ row.numero }}</td>
-              <td>{{ row.libelle }}</td>
-              <td class="text-center">{{ row.simples or 0 }}</td>
-              <td class="text-center {% if row.hospit > 0 %}text-primary fw-bold{% endif %}">{{ row.hospit or 0 }}</td>
-              <td class="text-center {% if row.evacues > 0 %}text-warning fw-bold{% endif %}">{{ row.evacues or 0 }}</td>
-              <td class="text-center {% if row.decedes > 0 %}text-danger fw-bold{% endif %}">{{ row.decedes or 0 }}</td>
-              <td class="text-center fw-bold text-green">{{ row.total }}</td>
+              <td class="text-muted" data-label="N">{{ row.numero }}</td>
+              <td data-label="Affection">{{ row.libelle }}</td>
+              <td class="text-center" data-label="Simples">{{ row.simples or 0 }}</td>
+              <td class="text-center {% if row.hospit > 0 %}text-primary fw-bold{% endif %}" data-label="Hospit.">{{ row.hospit or 0 }}</td>
+              <td class="text-center {% if row.evacues > 0 %}text-warning fw-bold{% endif %}" data-label="Evacues">{{ row.evacues or 0 }}</td>
+              <td class="text-center {% if row.decedes > 0 %}text-danger fw-bold{% endif %}" data-label="Decedes">{{ row.decedes or 0 }}</td>
+              <td class="text-center fw-bold text-green" data-label="Total">{{ row.total }}</td>
             </tr>
             {% endfor %}
           </tbody>

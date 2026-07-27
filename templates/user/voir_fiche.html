@@ -60,16 +60,16 @@
       <i class="bi bi-table"></i> Détail par Affection
       <span class="text-white-50 ms-2 small">Saisi le {{ fiche.date_saisie.strftime('%d/%m/%Y à %H:%M') }} par {{ fiche.saisi_par or 'N/C' }}</span>
     </div>
-    <div class="card-body p-0">
+    <div class="card-body p-0 table-stack-wrap">
       <div class="table-responsive">
-        <table class="table table-magal mb-0">
+        <table class="table table-magal table-stack mb-0">
           <thead>
             <tr>
               <th>N°</th><th>Affection</th>
-              <th class="text-center">Cas simples</th>
-              <th class="text-center">Hospitalisés</th>
-              <th class="text-center">Évacués</th>
-              <th class="text-center text-danger">Décédés</th>
+              <th class="text-center">Simples</th>
+              <th class="text-center">Hospit.</th>
+              <th class="text-center">Evacues</th>
+              <th class="text-center text-danger">Decedes</th>
               <th class="text-center fw-bold">Total</th>
             </tr>
           </thead>
@@ -80,28 +80,31 @@
             {% set total = lg.total if lg else 0 %}
             {% if lg and total > 0 %}
             {% if aff.categorie != ns.cat %}{% set ns.cat = aff.categorie %}
-            <tr class="saisie-section-header"><td colspan="7">
-              {% if aff.categorie == 'traumatisme' %}Traumatismes
-              {% elif aff.categorie == 'infectieux' %}Infectieux
-              {% elif aff.categorie == 'respiratoire' %}Respiratoire
-              {% elif aff.categorie == 'digestif' %}Digestif
-              {% elif aff.categorie == 'cardiovasculaire' %}Cardiovasculaire
-              {% elif aff.categorie == 'mpe' %}MPE
-              {% elif aff.categorie == 'gynaeco' %}Gyneco
-              {% elif aff.categorie == 'chronique' %}Chronique
-              {% else %}Autres{% endif %}
-            </td></tr>
+            <tr class="saisie-section-header">
+              <td colspan="7">
+                {% if aff.categorie == 'traumatisme' %}Traumatismes et Accidents
+                {% elif aff.categorie == 'infectieux' %}Maladies Infectieuses
+                {% elif aff.categorie == 'respiratoire' %}Affections Respiratoires
+                {% elif aff.categorie == 'digestif' %}Affections Digestives
+                {% elif aff.categorie == 'cardiovasculaire' %}Affections Cardiovasculaires
+                {% elif aff.categorie == 'mpe' %}Maladies a Potentiel Epidemique
+                {% elif aff.categorie == 'gynaeco' %}Gyneco-Obstetrique
+                {% elif aff.categorie == 'chronique' %}Maladies Chroniques
+                {% else %}Autres Affections{% endif %}
+              </td>
+            </tr>
             {% endif %}
             <tr class="{% if aff.is_mpe %}row-mpe{% endif %}">
-              <td class="text-muted small">{{ aff.numero }}</td>
-              <td class="small">{{ aff.libelle }}
+              <td class="text-muted small" data-label="N">{{ aff.numero }}</td>
+              <td class="small" data-label="Affection">
+                {{ aff.libelle }}
                 {% if aff.is_mpe %}<i class="bi bi-exclamation-circle text-danger ms-1"></i>{% endif %}
               </td>
-              <td class="text-center">{{ lg.cas_simples or 0 }}</td>
-              <td class="text-center {% if lg.hospitalises > 0 %}text-primary fw-bold{% endif %}">{{ lg.hospitalises or 0 }}</td>
-              <td class="text-center {% if lg.evacues > 0 %}text-warning fw-bold{% endif %}">{{ lg.evacues or 0 }}</td>
-              <td class="text-center {% if lg.decedes > 0 %}text-danger fw-bold{% endif %}">{{ lg.decedes or 0 }}</td>
-              <td class="text-center fw-bold text-green">{{ total }}</td>
+              <td class="text-center" data-label="Simples">{{ lg.cas_simples or 0 }}</td>
+              <td class="text-center {% if lg.hospitalises > 0 %}text-primary fw-bold{% endif %}" data-label="Hospit.">{{ lg.hospitalises or 0 }}</td>
+              <td class="text-center {% if lg.evacues > 0 %}text-warning fw-bold{% endif %}" data-label="Evacues">{{ lg.evacues or 0 }}</td>
+              <td class="text-center {% if lg.decedes > 0 %}text-danger fw-bold{% endif %}" data-label="Decedes">{{ lg.decedes or 0 }}</td>
+              <td class="text-center fw-bold text-green" data-label="Total">{{ total }}</td>
             </tr>
             {% endif %}
             {% endfor %}

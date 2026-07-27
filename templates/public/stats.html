@@ -165,20 +165,18 @@
         <div class="card-header card-header-green">
           <i class="bi bi-list-ol"></i> Top 10 Affections
         </div>
-        <div class="card-body p-0">
+        <div class="card-body p-0 table-stack-wrap">
           <div class="table-responsive">
-            <table class="table table-magal mb-0">
+            <table class="table table-magal table-stack mb-0">
               <thead>
-                <tr>
-                  <th>#</th><th>Affection</th><th class="text-end">Cas</th>
-                </tr>
+                <tr><th>#</th><th>Affection</th><th class="text-end">Cas</th></tr>
               </thead>
               <tbody>
                 {% for aff, total in stats.top_affections %}
                 <tr>
-                  <td class="fw-bold text-muted">{{ loop.index }}</td>
-                  <td>{{ aff }}</td>
-                  <td class="text-end fw-bold text-green">{{ total or 0 }}</td>
+                  <td class="fw-bold text-muted" data-label="#">{{ loop.index }}</td>
+                  <td data-label="Affection">{{ aff }}</td>
+                  <td class="text-end fw-bold text-green" data-label="Cas">{{ total or 0 }}</td>
                 </tr>
                 {% else %}
                 <tr><td colspan="3" class="text-center text-muted">Aucune donnée</td></tr>
@@ -197,18 +195,18 @@
           <i class="bi bi-exclamation-triangle-fill"></i>
           Maladies à Potentiel Épidémique (MPE)
         </div>
-        <div class="card-body p-0">
+        <div class="card-body p-0 table-stack-wrap">
           <div class="table-responsive">
-            <table class="table table-magal mb-0">
+            <table class="table table-magal table-stack mb-0">
               <thead>
                 <tr><th>Maladie</th><th class="text-end">Cas</th></tr>
               </thead>
               <tbody>
                 {% for aff, total in stats.mpe_data %}
                 {% if total and total > 0 %}
-                <tr class="table-warning">
-                  <td><i class="bi bi-exclamation-circle text-danger me-1"></i>{{ aff }}</td>
-                  <td class="text-end fw-bold text-danger">{{ total }}</td>
+                <tr class="table-warning row-mpe">
+                  <td data-label="Maladie"><i class="bi bi-exclamation-circle text-danger me-1"></i>{{ aff }}</td>
+                  <td class="text-end fw-bold text-danger" data-label="Cas">{{ total }}</td>
                 </tr>
                 {% endif %}
                 {% else %}

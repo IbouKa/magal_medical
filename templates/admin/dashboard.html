@@ -93,13 +93,16 @@
     <div class="col-md-6">
       <div class="card border-0 shadow-sm h-100">
         <div class="card-header card-header-green"><i class="bi bi-map-fill"></i> Consultants par Zone</div>
-        <div class="card-body p-0">
+        <div class="card-body p-0 table-stack-wrap">
           <div class="table-responsive" style="max-height:260px;overflow-y:auto;">
-            <table class="table table-magal mb-0">
+            <table class="table table-magal table-stack mb-0">
               <thead><tr><th>Zone</th><th class="text-end">Total</th></tr></thead>
               <tbody>
                 {% for nom, total in stats.by_district %}
-                <tr><td>{{ nom }}</td><td class="text-end fw-bold text-green">{{ total or 0 }}</td></tr>
+                <tr>
+                  <td data-label="Zone">{{ nom }}</td>
+                  <td class="text-end fw-bold text-green" data-label="Total">{{ total or 0 }}</td>
+                </tr>
                 {% endfor %}
               </tbody>
             </table>
@@ -113,15 +116,15 @@
     <div class="col-md-6">
       <div class="card border-0 shadow-sm">
         <div class="card-header card-header-green"><i class="bi bi-list-ol"></i> Top 10 Affections</div>
-        <div class="card-body p-0">
-          <table class="table table-magal mb-0">
+        <div class="card-body p-0 table-stack-wrap">
+          <table class="table table-magal table-stack mb-0">
             <thead><tr><th>#</th><th>Affection</th><th class="text-end">Cas</th></tr></thead>
             <tbody>
               {% for aff, total in stats.top_affections %}
               <tr>
-                <td class="text-muted">{{ loop.index }}</td>
-                <td>{{ aff }}</td>
-                <td class="text-end fw-bold text-green">{{ total or 0 }}</td>
+                <td class="text-muted" data-label="#">{{ loop.index }}</td>
+                <td data-label="Affection">{{ aff }}</td>
+                <td class="text-end fw-bold text-green" data-label="Cas">{{ total or 0 }}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -134,15 +137,15 @@
         <div class="card-header" style="background:#c0392b;color:white;font-weight:600;">
           <i class="bi bi-exclamation-triangle-fill"></i> MPE
         </div>
-        <div class="card-body p-0">
-          <table class="table table-magal mb-0">
+        <div class="card-body p-0 table-stack-wrap">
+          <table class="table table-magal table-stack mb-0">
             <thead><tr><th>Maladie</th><th class="text-end">Cas</th></tr></thead>
             <tbody>
               {% for aff, total in stats.mpe %}
               {% if total and total > 0 %}
-              <tr class="table-warning">
-                <td><i class="bi bi-exclamation-circle text-danger me-1"></i>{{ aff }}</td>
-                <td class="text-end fw-bold text-danger">{{ total }}</td>
+              <tr class="table-warning row-mpe">
+                <td data-label="Maladie"><i class="bi bi-exclamation-circle text-danger me-1"></i>{{ aff }}</td>
+                <td class="text-end fw-bold text-danger" data-label="Cas">{{ total }}</td>
               </tr>
               {% endif %}
               {% else %}
@@ -165,16 +168,16 @@
     </div>
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-magal mb-0">
+        <table class="table table-magal table-stack mb-0">
           <thead><tr><th>Structure</th><th>District</th><th>Période</th><th>Total</th><th>Date</th></tr></thead>
           <tbody>
             {% for f in stats.fiches_recentes %}
             <tr>
-              <td class="fw-semibold">{{ f.eps.nom }}</td>
-              <td class="text-muted small">{{ f.eps.district.nom }}</td>
-              <td><span class="badge bg-success">{{ f.periode }}</span></td>
-              <td class="fw-bold text-green">{{ f.get_total_consultants() }}</td>
-              <td class="text-muted small">{{ f.date_saisie.strftime('%d/%m %H:%M') }}</td>
+              <td class="fw-semibold" data-label="Structure">{{ f.eps.nom }}</td>
+              <td class="text-muted small" data-label="District">{{ f.eps.district.nom }}</td>
+              <td data-label="Periode"><span class="badge bg-success">{{ f.periode }}</span></td>
+              <td class="fw-bold text-green" data-label="Total">{{ f.get_total_consultants() }}</td>
+              <td class="text-muted small" data-label="Date">{{ f.date_saisie.strftime('%d/%m %H:%M') }}</td>
             </tr>
             {% else %}
             <tr><td colspan="5" class="text-center text-muted">Aucune soumission</td></tr>

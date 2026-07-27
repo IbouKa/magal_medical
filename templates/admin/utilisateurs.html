@@ -5,46 +5,46 @@
   <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <h2 class="page-title mb-0"><i class="bi bi-people-fill text-green"></i> Utilisateurs</h2>
     <a href="{{ url_for('admin.nouveau_utilisateur') }}" class="btn btn-success btn-sm">
-      <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">Creer utilisateur</span>
+      <i class="bi bi-plus-lg"></i> Créer utilisateur
     </a>
   </div>
   <div class="card border-0 shadow-sm">
-    <div class="card-body p-0">
+    <div class="card-body p-0 table-stack-wrap">
       <div class="table-responsive">
-        <table class="table table-magal mb-0">
+        <table class="table table-magal table-stack mb-0">
           <thead>
             <tr>
               <th>Identifiant</th>
-              <th class="d-none d-sm-table-cell">Nom complet</th>
-              <th>Role</th>
-              <th class="d-none d-md-table-cell">EPS associe</th>
-              <th class="d-none d-lg-table-cell">Email</th>
-              <th class="text-center d-none d-sm-table-cell">Actif</th>
-              <th>Actions</th>
+              <th>Nom complet</th>
+              <th>Rôle</th>
+              <th>EPS associé</th>
+              <th>Email</th>
+              <th class="text-center">Actif</th>
+              <th class="text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
             {% for u in users %}
             <tr class="{% if not u.actif %}table-secondary{% endif %}">
-              <td class="fw-semibold">
-                {{ u.username }}
-                <div class="d-sm-none text-muted" style="font-size:.7rem;">{{ u.nom_complet or '' }}</div>
-              </td>
-              <td class="d-none d-sm-table-cell">{{ u.nom_complet or '-' }}</td>
-              <td>
+              <td class="fw-semibold" data-label="Identifiant">{{ u.username }}</td>
+              <td data-label="Nom">{{ u.nom_complet or '-' }}</td>
+              <td data-label="Rôle">
                 <span class="badge {% if u.role == 'admin' %}bg-warning text-dark{% else %}bg-info text-dark{% endif %}">
                   {{ 'Admin' if u.role == 'admin' else 'Responsable' }}
                 </span>
               </td>
-              <td class="small d-none d-md-table-cell">{{ u.eps.nom if u.eps else '-' }}</td>
-              <td class="small text-muted d-none d-lg-table-cell">{{ u.email or '-' }}</td>
-              <td class="text-center d-none d-sm-table-cell">
-                {% if u.actif %}<i class="bi bi-check-circle-fill text-success"></i>
-                {% else %}<i class="bi bi-x-circle-fill text-danger"></i>{% endif %}
+              <td class="small" data-label="EPS">{{ u.eps.nom if u.eps else '-' }}</td>
+              <td class="small text-muted" data-label="Email">{{ u.email or '-' }}</td>
+              <td class="text-center" data-label="Actif">
+                {% if u.actif %}
+                <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Oui</span>
+                {% else %}
+                <span class="badge bg-danger"><i class="bi bi-x-circle-fill"></i> Non</span>
+                {% endif %}
               </td>
-              <td>
+              <td class="text-center" data-label="">
                 <a href="{{ url_for('admin.modifier_utilisateur', user_id=u.id) }}" class="btn btn-sm btn-outline-primary py-0">
-                  <i class="bi bi-pencil"></i>
+                  <i class="bi bi-pencil"></i> Modifier
                 </a>
               </td>
             </tr>

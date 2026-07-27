@@ -500,6 +500,119 @@ footer small { font-size: .8rem; opacity: .85; }
 
 
 /* ============================================================
+   RESPONSIVE TABLES — Stacked card layout (< 576px)
+   Each row becomes a card; each cell shows its label inline.
+   Usage: add class "table-stack" + data-label="..." on each <td>
+   ============================================================ */
+@media (max-width: 575.98px) {
+
+  /* Remove the outer overflow container for stacked tables */
+  .table-stack-wrap {
+    overflow: visible !important;
+    border-radius: 0 !important;
+  }
+
+  .table-stack thead {
+    display: none !important;
+  }
+
+  .table-stack tfoot {
+    display: none !important;
+  }
+
+  /* Override Bootstrap d-none hiding inside stack — show all cells */
+  .table-stack tbody td,
+  .table-stack tbody th {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    border: none !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+    padding: .45rem .875rem !important;
+    font-size: .84rem;
+    background: transparent !important;
+    /* Override d-none columns */
+    visibility: visible !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Label before each cell value */
+  .table-stack tbody td[data-label]::before {
+    content: attr(data-label);
+    font-weight: 600;
+    font-size: .7rem;
+    color: var(--green-dark);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-right: .5rem;
+    flex-shrink: 0;
+    width: 38%;
+    min-width: 80px;
+  }
+
+  /* Cells with no label (empty data-label) hide the ::before */
+  .table-stack tbody td[data-label=""]::before {
+    display: none;
+    width: 0;
+    margin: 0;
+  }
+
+  /* Section/category header rows */
+  .table-stack tbody tr.saisie-section-header {
+    background: var(--green-pale) !important;
+    border-left-color: var(--green-mid) !important;
+  }
+  .table-stack tbody tr.saisie-section-header td {
+    font-weight: 700 !important;
+    font-size: .78rem !important;
+    border-bottom: none !important;
+    justify-content: flex-start !important;
+  }
+  .table-stack tbody tr.saisie-section-header td::before {
+    display: none !important;
+  }
+
+  /* Each row becomes a card */
+  .table-stack tbody tr {
+    display: block !important;
+    background: #fff !important;
+    border: 1px solid #e8f5ec !important;
+    border-left: 3px solid var(--green-mid) !important;
+    border-radius: 8px !important;
+    margin: 0 0 .625rem !important;
+    padding: .125rem 0 !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06) !important;
+    overflow: hidden !important;
+  }
+
+  /* MPE rows get a warning left border */
+  .table-stack tbody tr.row-mpe {
+    border-left-color: #e65100 !important;
+    background: #fff8f0 !important;
+  }
+
+  /* Table-secondary (inactive) rows */
+  .table-stack tbody tr.table-secondary {
+    opacity: .65;
+    border-left-color: #9e9e9e !important;
+  }
+
+  /* Last cell in row has no bottom border */
+  .table-stack tbody td:last-child {
+    border-bottom: none !important;
+  }
+
+  /* Action cells (no label) — right-align */
+  .table-stack tbody td[data-label=""] {
+    justify-content: flex-end;
+    padding: .4rem .875rem !important;
+    border-top: 1px solid #f5f5f5 !important;
+    background: #fafafa !important;
+  }
+}
+
+/* ============================================================
    Print styles
    ============================================================ */
 @media print {
