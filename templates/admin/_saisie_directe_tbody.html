@@ -1,0 +1,55 @@
+{% set ns = namespace(cat='') %}
+{% for aff in affections %}
+  {% if aff.categorie != ns.cat %}
+    {% set ns.cat = aff.categorie %}
+    <tr class="saisie-section-header">
+      <td colspan="7">
+        <span>
+          {% if aff.categorie == 'traumatisme' %}Traumatismes et Accidents
+          {% elif aff.categorie == 'infectieux' %}Maladies Infectieuses
+          {% elif aff.categorie == 'respiratoire' %}Affections Respiratoires
+          {% elif aff.categorie == 'digestif' %}Affections Digestives
+          {% elif aff.categorie == 'cardiovasculaire' %}Affections Cardiovasculaires
+          {% elif aff.categorie == 'mpe' %}<i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>Maladies a Potentiel Epidemique
+          {% elif aff.categorie == 'gynaeco' %}Gyneco-Obstetrique
+          {% elif aff.categorie == 'chronique' %}Maladies Chroniques
+          {% else %}Autres Affections{% endif %}
+        </span>
+      </td>
+    </tr>
+  {% endif %}
+  {% set lg = lignes_map.get(aff.id) %}
+  {% set row_total = lg.total if lg else 0 %}
+  <tr class="saisie-data-row {% if aff.is_mpe %}row-mpe{% endif %} {% if row_total > 0 %}saisie-row-filled{% endif %}"
+      id="row_{{ aff.id }}" data-mpe="{{ '1' if aff.is_mpe else '0' }}">
+    <td class="text-muted small">{{ aff.numero }}</td>
+    <td class="saisie-affection-cell small">
+      {{ aff.libelle }}{% if aff.is_mpe %}<i class="bi bi-exclamation-circle-fill text-danger ms-1"></i>{% endif %}
+    </td>
+    <td class="saisie-input-cell" data-label="Cas simples">
+      <input type="number" id="s_{{ aff.id }}" name="simples_{{ aff.id }}" min="0"
+             value="{{ lg.cas_simples if lg else 0 }}"
+             class="form-control form-control-sm saisie-input {% if lg and lg.cas_simples > 0 %}changed{% endif %}"
+             oninput="updateAdminTotal('{{ aff.id }}')">
+    </td>
+    <td class="saisie-input-cell" data-label="Hospitalises">
+      <input type="number" id="h_{{ aff.id }}" name="hospit_{{ aff.id }}" min="0"
+             value="{{ lg.hospitalises if lg else 0 }}"
+             class="form-control form-control-sm saisie-input {% if lg and lg.hospitalises > 0 %}changed{% endif %}"
+             oninput="updateAdminTotal('{{ aff.id }}')">
+    </td>
+    <td class="saisie-input-cell" data-label="Evacues">
+      <input type="number" id="e_{{ aff.id }}" name="evacues_{{ aff.id }}" min="0"
+             value="{{ lg.evacues if lg else 0 }}"
+             class="form-control form-control-sm saisie-input {% if lg and lg.evacues > 0 %}changed{% endif %}"
+             oninput="updateAdminTotal('{{ aff.id }}')">
+    </td>
+    <td class="saisie-input-cell" data-label="Decedes">
+      <input type="number" id="d_{{ aff.id }}" name="decedes_{{ aff.id }}" min="0"
+             value="{{ lg.decedes if lg else 0 }}"
+             class="form-control form-control-sm saisie-input {% if lg and lg.decedes > 0 %}changed{% endif %}"
+             oninput="updateAdminTotal('{{ aff.id }}')">
+    </td>
+    <td class="saisie-total-cell fw-bold" id="tot_{{ aff.id }}">{{ row_total }}</td>
+  </tr>
+{% endfor %}

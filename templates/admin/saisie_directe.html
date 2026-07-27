@@ -7,10 +7,9 @@
     <small class="text-muted fs-5">{{ eps.nom }}</small>
   </h2>
 
-  <!-- Selecteur de periode scrollable sur mobile -->
   <div class="card border-0 shadow-sm mb-3">
     <div class="card-body py-2 d-flex align-items-center gap-2 flex-wrap">
-      <div style="overflow-x:auto; -webkit-overflow-scrolling:touch; flex-shrink:0;">
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0;">
         <div class="btn-group flex-nowrap">
           {% for p in periodes %}
           <a href="{{ url_for('admin.saisie_directe', eps_id=eps.id, periode=p) }}"
@@ -19,9 +18,7 @@
         </div>
       </div>
       {% if fiche %}
-      <span class="badge bg-success">
-        <i class="bi bi-check-circle-fill"></i> Fiche existante
-      </span>
+      <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Fiche existante</span>
       {% else %}
       <span class="badge bg-secondary"><i class="bi bi-pencil"></i> Nouvelle fiche</span>
       {% endif %}
@@ -34,82 +31,31 @@
       <div class="card-header card-header-green d-flex justify-content-between align-items-center flex-wrap gap-1">
         <span class="small">
           <i class="bi bi-table"></i>
-          {{ eps.nom }} &mdash; {{ selected_periode }}
-          {% if edition %}&mdash; Edition {{ edition.annee }}{% endif %}
+          {{ eps.nom }} &mdash; {{ selected_periode }}{% if edition %} &mdash; {{ edition.annee }}{% endif %}
         </span>
         <button type="button" class="btn btn-sm btn-light" onclick="clearAll()">
-          <i class="bi bi-eraser"></i>
-          <span class="d-none d-sm-inline">Effacer tout</span>
+          <i class="bi bi-eraser"></i><span class="d-none d-sm-inline"> Effacer</span>
         </button>
       </div>
       <div class="card-body p-0">
         <div class="scroll-hint px-2 pt-1 text-end">
           <i class="bi bi-arrow-left-right"></i> Glissez pour voir toutes les colonnes
         </div>
-        <div class="table-responsive">
+        <div class="saisie-table-responsive table-responsive">
           <table class="table table-magal saisie-table mb-0">
             <thead>
               <tr>
-                <th style="width:28px;">N</th>
-                <th>Affection / Motif de consultation</th>
-                <th class="text-center" style="min-width:70px;">Cas simples</th>
-                <th class="text-center" style="min-width:70px;">Hospitalises</th>
-                <th class="text-center" style="min-width:70px;">Evacues</th>
-                <th class="text-center text-danger" style="min-width:70px;">Decedes</th>
-                <th class="text-center" style="min-width:60px;">Total</th>
+                <th style="width:26px;">N</th>
+                <th>Affection / Motif</th>
+                <th class="text-center" style="min-width:68px;">Simples</th>
+                <th class="text-center" style="min-width:68px;">Hospit.</th>
+                <th class="text-center" style="min-width:68px;">Evacues</th>
+                <th class="text-center text-danger" style="min-width:68px;">Decedes</th>
+                <th class="text-center" style="min-width:54px;">Total</th>
               </tr>
             </thead>
             <tbody>
-              {% set ns = namespace(cat='') %}
-              {% for aff in affections %}
-                {% if aff.categorie != ns.cat %}
-                  {% set ns.cat = aff.categorie %}
-                  <tr class="saisie-section-header">
-                    <td colspan="7">
-                      {% if aff.categorie == 'traumatisme' %}Traumatismes et Accidents
-                      {% elif aff.categorie == 'infectieux' %}Maladies Infectieuses
-                      {% elif aff.categorie == 'respiratoire' %}Affections Respiratoires
-                      {% elif aff.categorie == 'digestif' %}Affections Digestives
-                      {% elif aff.categorie == 'cardiovasculaire' %}Affections Cardiovasculaires
-                      {% elif aff.categorie == 'mpe' %}Maladies a Potentiel Epidemique (MPE)
-                      {% elif aff.categorie == 'gynaeco' %}Gyneco-Obstetrique
-                      {% elif aff.categorie == 'chronique' %}Maladies Chroniques
-                      {% else %}Autres Affections{% endif %}
-                    </td>
-                  </tr>
-                {% endif %}
-                {% set lg = lignes_map.get(aff.id) %}
-                <tr class="{% if aff.is_mpe %}row-mpe{% endif %}">
-                  <td class="text-muted small">{{ aff.numero }}</td>
-                  <td class="small affection-label">
-                    {{ aff.libelle }}
-                    {% if aff.is_mpe %}<i class="bi bi-exclamation-circle-fill text-danger ms-1"></i>{% endif %}
-                  </td>
-                  <td class="text-center">
-                    <input type="number" name="simples_{{ aff.id }}" min="0"
-                           value="{{ lg.cas_simples if lg else 0 }}"
-                           class="form-control form-control-sm saisie-input">
-                  </td>
-                  <td class="text-center">
-                    <input type="number" name="hospit_{{ aff.id }}" min="0"
-                           value="{{ lg.hospitalises if lg else 0 }}"
-                           class="form-control form-control-sm saisie-input">
-                  </td>
-                  <td class="text-center">
-                    <input type="number" name="evacues_{{ aff.id }}" min="0"
-                           value="{{ lg.evacues if lg else 0 }}"
-                           class="form-control form-control-sm saisie-input">
-                  </td>
-                  <td class="text-center">
-                    <input type="number" name="decedes_{{ aff.id }}" min="0"
-                           value="{{ lg.decedes if lg else 0 }}"
-                           class="form-control form-control-sm saisie-input">
-                  </td>
-                  <td class="text-center fw-bold text-green">
-                    {% if lg %}{{ lg.total }}{% else %}0{% endif %}
-                  </td>
-                </tr>
-              {% endfor %}
+              {% include 'admin/_saisie_directe_tbody.html' %}
             </tbody>
           </table>
         </div>
@@ -117,15 +63,14 @@
     </div>
 
     <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header card-header-green py-2"><i class="bi bi-chat-left-text"></i> Observations</div>
       <div class="card-body">
-        <label class="form-label fw-semibold">Observations / Commentaires</label>
         <textarea name="observations" class="form-control" rows="2"
                   placeholder="Signaler tout evenement particulier...">{{ fiche.observations if fiche else '' }}</textarea>
       </div>
     </div>
 
-    <!-- Boutons desktop -->
-    <div class="d-flex gap-2 mb-4 d-none d-md-flex">
+    <div class="d-none d-md-flex gap-2 mb-4">
       <button type="submit" class="btn btn-success btn-lg px-5">
         <i class="bi bi-save2-fill"></i> Enregistrer la fiche
       </button>
@@ -133,39 +78,41 @@
         <i class="bi bi-arrow-left"></i> Retour Completude
       </a>
     </div>
-
-    <!-- Barre de sauvegarde fixe visible uniquement sur mobile -->
     <div class="mobile-save-bar">
-      <button type="submit" class="btn btn-success">
-        <i class="bi bi-save2-fill"></i> Enregistrer
-      </button>
+      <button type="submit" class="btn btn-success"><i class="bi bi-save2-fill"></i> Enregistrer</button>
       <a href="{{ url_for('admin.completude', periode=selected_periode) }}" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left"></i> Retour
       </a>
     </div>
-
   </form>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-if (window.innerWidth < 768) {
-  document.body.classList.add('has-sticky-bar');
-}
-window.addEventListener('resize', function () {
-  if (window.innerWidth < 768) {
-    document.body.classList.add('has-sticky-bar');
-  } else {
-    document.body.classList.remove('has-sticky-bar');
+function updateAdminTotal(id) {
+  var s = parseInt(document.getElementById('s_' + id).value) || 0;
+  var h = parseInt(document.getElementById('h_' + id).value) || 0;
+  var e = parseInt(document.getElementById('e_' + id).value) || 0;
+  var d = parseInt(document.getElementById('d_' + id).value) || 0;
+  var tot = document.getElementById('tot_' + id);
+  if (tot) tot.textContent = s + h + e;
+  var row = document.getElementById('row_' + id);
+  if (row) {
+    if (s > 0 || h > 0 || e > 0 || d > 0) row.classList.add('saisie-row-filled');
+    else row.classList.remove('saisie-row-filled');
   }
-});
-
+}
 function clearAll() {
   if (!confirm('Effacer toutes les valeurs ?')) return;
-  document.querySelectorAll('.saisie-input').forEach(function (inp) {
-    inp.value = 0;
-  });
+  document.querySelectorAll('.saisie-input').forEach(function(inp) { inp.value = 0; });
+  document.querySelectorAll('[id^="tot_"]').forEach(function(el) { el.textContent = '0'; });
+  document.querySelectorAll('.saisie-data-row').forEach(function(r) { r.classList.remove('saisie-row-filled'); });
 }
+if (window.innerWidth < 768) document.body.classList.add('has-sticky-bar');
+window.addEventListener('resize', function() {
+  if (window.innerWidth < 768) document.body.classList.add('has-sticky-bar');
+  else document.body.classList.remove('has-sticky-bar');
+});
 </script>
 {% endblock %}

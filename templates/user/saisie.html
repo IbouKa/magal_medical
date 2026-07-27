@@ -1,75 +1,32 @@
 {% extends "base.html" %}
 {% block title %}Saisie — {{ selected_periode }}{% endblock %}
 
-{% block extra_head %}
-<style>
-.saisie-table thead th { position:sticky; top:0; z-index:2; background-color:var(--green-dark) !important; }
-.saisie-row-filled { background-color:#f0faf2 !important; }
-.saisie-section-header { cursor:pointer; user-select:none; }
-.saisie-section-header:hover { background-color:#c8e6c9 !important; }
-.saisie-section-header td { display:flex; align-items:center; justify-content:space-between; }
-.section-toggle-icon { font-size:.7rem; opacity:.55; transition:transform .2s; }
-.section-collapsed .section-toggle-icon { transform:rotate(-90deg); }
-.saisie-search-wrap { position:relative; }
-.saisie-search-wrap .search-icon { position:absolute; left:.75rem; top:50%; transform:translateY(-50%); color:var(--green-mid); pointer-events:none; }
-.saisie-search-input { padding-left:2.2rem !important; border-color:var(--green-light) !important; }
-.saisie-search-input:focus { box-shadow:0 0 0 3px rgba(76,175,114,.2) !important; }
-.saisie-totals-bar { background:linear-gradient(135deg,var(--green-dark),var(--green-mid)); color:white; border-radius:0 0 8px 8px; padding:.6rem 1rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
-.tot-item { display:flex; flex-direction:column; align-items:center; min-width:56px; }
-.tot-value { font-size:1.2rem; font-weight:700; line-height:1; }
-.tot-label { font-size:.6rem; opacity:.8; text-transform:uppercase; letter-spacing:.04em; }
-.tot-sep { width:1px; height:30px; background:rgba(255,255,255,.3); }
-.tot-grand { margin-left:auto; font-size:.8rem; opacity:.9; text-align:right; }
-.draft-badge { display:none; }
-.draft-badge.visible { display:inline-flex; animation:pulse 1.5s infinite; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-.mpe-counter { display:inline-flex; align-items:center; gap:.25rem; background:#c0392b; color:white; border-radius:20px; padding:.15rem .55rem; font-size:.72rem; font-weight:700; }
-.mpe-counter.d-none { display:none !important; }
-.saisie-input { text-align:center !important; font-weight:600 !important; }
-.saisie-input:focus { background:#f0fdf4 !important; border-color:var(--green-mid) !important; }
-.saisie-input.changed { border-color:var(--gold) !important; background:#fffde7 !important; }
-.row-hidden { display:none !important; }
-.saisie-section-row.row-hidden { display:none !important; }
-.no-results-row { display:none; }
-.no-results-row.visible { display:table-row; }
-@media (max-width:767.98px) {
-  .saisie-totals-bar { gap:.5rem; padding:.5rem .75rem; }
-  .tot-value { font-size:1rem; }
-  .tot-label { font-size:.55rem; }
-}
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="container-fluid px-3">
 
-  <!-- Header -->
   <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-2">
     <h2 class="page-title mb-0">
       <i class="bi bi-pencil-fill text-green"></i> Fiche Journaliere
       <small class="text-muted fs-5">{{ eps.nom }}</small>
     </h2>
     <span class="draft-badge badge bg-warning text-dark" id="draftBadge">
-      <i class="bi bi-clock-history"></i> Modifications non sauvegardees
+      <i class="bi bi-clock-history"></i> Non sauvegarde
     </span>
   </div>
 
-  <!-- Selecteur de periode -->
   <div class="card border-0 shadow-sm mb-3">
     <div class="card-body py-2 d-flex align-items-center gap-2 flex-wrap">
-      <div style="overflow-x:auto; -webkit-overflow-scrolling:touch; flex-shrink:0;">
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0;">
         <div class="btn-group flex-nowrap">
           {% for p in periodes %}
           <a href="{{ url_for('user.saisie', periode=p) }}"
              class="btn btn-sm btn-outline-success periode-btn {% if selected_periode == p %}active{% endif %}"
-             onclick="if(hasChanges && '{{ p }}' !== '{{ selected_periode }}') return confirm('Des modifications non sauvegardees seront perdues. Continuer ?');">{{ p }}</a>
+             onclick="if(hasChanges&&'{{ p }}'!=='{{ selected_periode }}')return confirm('Modifications non sauvegardees. Continuer ?');">{{ p }}</a>
           {% endfor %}
         </div>
       </div>
       {% if fiche %}
-      <span class="badge bg-success">
-        <i class="bi bi-check-circle-fill"></i> Sauvegarde le {{ fiche.date_saisie.strftime('%d/%m a %H:%M') }}
-      </span>
+      <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> {{ fiche.date_saisie.strftime('%d/%m %H:%M') }}</span>
       {% else %}
       <span class="badge bg-secondary"><i class="bi bi-pencil"></i> Nouvelle fiche</span>
       {% endif %}
@@ -81,412 +38,80 @@
 
   <form method="POST" id="saisieFrm">
     <input type="hidden" name="periode" value="{{ selected_periode }}">
-
     <div class="card border-0 shadow-sm mb-3">
-      <!-- Card header -->
       <div class="card-header card-header-green d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <span class="small">
-          <i class="bi bi-table"></i>
-          {{ eps.nom }} &mdash; Periode {{ selected_periode }} &mdash; Edition {{ edition.annee }}
-        </span>
-        <div class="d-flex gap-1 align-items-center">
-          <!-- Toggle: afficher seulement les lignes remplies -->
-          <button type="button" class="btn btn-sm btn-light" id="toggleFilledBtn" onclick="toggleFilledOnly()" title="Afficher seulement les lignes remplies">
-            <i class="bi bi-funnel"></i>
-            <span class="d-none d-sm-inline">Remplies</span>
+        <span class="small"><i class="bi bi-table"></i> {{ eps.nom }} &mdash; {{ selected_periode }} &mdash; {{ edition.annee }}</span>
+        <div class="d-flex gap-1">
+          <button type="button" class="btn btn-sm btn-light" id="toggleFilledBtn" onclick="toggleFilledOnly()">
+            <i class="bi bi-funnel"></i><span class="d-none d-sm-inline"> Remplies</span>
           </button>
-          <button type="button" class="btn btn-sm btn-light" onclick="clearAll()" title="Effacer toutes les valeurs">
-            <i class="bi bi-eraser"></i>
-            <span class="d-none d-sm-inline">Effacer</span>
+          <button type="button" class="btn btn-sm btn-light" onclick="clearAll()">
+            <i class="bi bi-eraser"></i><span class="d-none d-sm-inline"> Effacer</span>
           </button>
         </div>
       </div>
-
-      <!-- Barre de recherche -->
       <div class="px-3 pt-2 pb-1">
         <div class="saisie-search-wrap">
           <i class="bi bi-search search-icon"></i>
-          <input type="text" id="searchInput" class="form-control form-control-sm saisie-search-input"
-                 placeholder="Rechercher une affection..." autocomplete="off">
+          <input type="text" id="searchInput" class="form-control form-control-sm saisie-search-input" placeholder="Rechercher une affection..." autocomplete="off">
         </div>
         <div class="scroll-hint mt-1 text-end">
-          <i class="bi bi-arrow-left-right"></i> Glissez le tableau horizontalement
+          <i class="bi bi-arrow-left-right"></i> Glissez pour voir toutes les colonnes
         </div>
       </div>
-
       <div class="card-body p-0">
-        <div class="table-responsive">
+        <div class="saisie-table-responsive table-responsive">
           <table class="table table-magal saisie-table mb-0" id="saisieTable">
             <thead>
               <tr>
-                <th style="width:28px;">N</th>
-                <th>Affection / Motif de consultation</th>
-                <th class="text-center" style="min-width:70px;">Simples</th>
-                <th class="text-center" style="min-width:70px;">Hospit.</th>
-                <th class="text-center" style="min-width:70px;">Evacues</th>
-                <th class="text-center text-danger" style="min-width:70px;">Decedes</th>
-                <th class="text-center" style="min-width:56px;">Total</th>
+                <th style="width:26px;">N</th>
+                <th>Affection / Motif</th>
+                <th class="text-center" style="min-width:68px;">Simples</th>
+                <th class="text-center" style="min-width:68px;">Hospit.</th>
+                <th class="text-center" style="min-width:68px;">Evacues</th>
+                <th class="text-center text-danger" style="min-width:68px;">Decedes</th>
+                <th class="text-center" style="min-width:54px;">Total</th>
               </tr>
             </thead>
             <tbody id="saisieBody">
-              {% set ns = namespace(cat='', sec_id=0) %}
-              {% for aff in affections %}
-                {% if aff.categorie != ns.cat %}
-                  {% set ns.cat = aff.categorie %}
-                  {% set ns.sec_id = ns.sec_id + 1 %}
-                  <tr class="saisie-section-header" data-sec="{{ ns.sec_id }}" onclick="toggleSection({{ ns.sec_id }}, this)">
-                    <td colspan="7">
-                      <span>
-                        {% if aff.categorie == 'traumatisme' %}Traumatismes et Accidents
-                        {% elif aff.categorie == 'infectieux' %}Maladies Infectieuses
-                        {% elif aff.categorie == 'respiratoire' %}Affections Respiratoires
-                        {% elif aff.categorie == 'digestif' %}Affections Digestives
-                        {% elif aff.categorie == 'cardiovasculaire' %}Affections Cardiovasculaires
-                        {% elif aff.categorie == 'mpe' %}<i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>Maladies a Potentiel Epidemique
-                        {% elif aff.categorie == 'gynaeco' %}Gyneco-Obstetrique
-                        {% elif aff.categorie == 'chronique' %}Maladies Chroniques
-                        {% else %}Autres Affections{% endif %}
-                      </span>
-                      <i class="bi bi-chevron-down section-toggle-icon"></i>
-                    </td>
-                  </tr>
-                {% endif %}
-                {% set lg = lignes_map.get(aff.id) %}
-                {% set row_total = lg.total if lg else 0 %}
-                <tr class="saisie-data-row {% if aff.is_mpe %}row-mpe{% endif %} {% if row_total > 0 %}saisie-row-filled{% endif %}"
-                    id="row_{{ aff.id }}"
-                    data-sec="{{ ns.sec_id }}"
-                    data-label="{{ aff.libelle | lower }}"
-                    data-mpe="{{ '1' if aff.is_mpe else '0' }}">
-                  <td class="text-muted small">{{ aff.numero }}</td>
-                  <td class="small affection-label">
-                    {{ aff.libelle }}
-                    {% if aff.is_mpe %}<i class="bi bi-exclamation-circle-fill text-danger ms-1"></i>{% endif %}
-                  </td>
-                  <td class="text-center">
-                    <input type="number" id="s_{{ aff.id }}" name="simples_{{ aff.id }}" min="0"
-                           value="{{ lg.cas_simples if lg else 0 }}"
-                           class="form-control form-control-sm saisie-input {% if lg and lg.cas_simples > 0 %}changed{% endif %}"
-                           oninput="updateTotal({{ aff.id }}); markChanged(this);">
-                  </td>
-                  <td class="text-center">
-                    <input type="number" id="h_{{ aff.id }}" name="hospit_{{ aff.id }}" min="0"
-                           value="{{ lg.hospitalises if lg else 0 }}"
-                           class="form-control form-control-sm saisie-input {% if lg and lg.hospitalises > 0 %}changed{% endif %}"
-                           oninput="updateTotal({{ aff.id }}); markChanged(this);">
-                  </td>
-                  <td class="text-center">
-                    <input type="number" id="e_{{ aff.id }}" name="evacues_{{ aff.id }}" min="0"
-                           value="{{ lg.evacues if lg else 0 }}"
-                           class="form-control form-control-sm saisie-input {% if lg and lg.evacues > 0 %}changed{% endif %}"
-                           oninput="updateTotal({{ aff.id }}); markChanged(this);">
-                  </td>
-                  <td class="text-center">
-                    <input type="number" id="d_{{ aff.id }}" name="decedes_{{ aff.id }}" min="0"
-                           value="{{ lg.decedes if lg else 0 }}"
-                           class="form-control form-control-sm saisie-input {% if lg and lg.decedes > 0 %}changed{% endif %}"
-                           oninput="updateTotal({{ aff.id }}); markChanged(this);">
-                  </td>
-                  <td class="text-center fw-bold" id="tot_{{ aff.id }}">{{ row_total }}</td>
-                </tr>
-              {% endfor %}
-              <tr class="no-results-row" id="noResultsRow">
-                <td colspan="7" class="text-center text-muted py-3">
-                  <i class="bi bi-search"></i> Aucune affection trouvee
-                </td>
-              </tr>
+              {% include 'user/_saisie_tbody.html' %}
             </tbody>
           </table>
         </div>
-
-        <!-- Barre de totaux en direct -->
         <div class="saisie-totals-bar" id="totalsBar">
-          <div class="tot-item">
-            <span class="tot-value text-white" id="sumSimples">0</span>
-            <span class="tot-label">Simples</span>
-          </div>
+          <div class="tot-item"><span class="tot-value text-white" id="sumSimples">0</span><span class="tot-label">Simples</span></div>
           <div class="tot-sep"></div>
-          <div class="tot-item">
-            <span class="tot-value" style="color:#90caf9;" id="sumHospit">0</span>
-            <span class="tot-label">Hospit.</span>
-          </div>
+          <div class="tot-item"><span class="tot-value" style="color:#90caf9;" id="sumHospit">0</span><span class="tot-label">Hospit.</span></div>
           <div class="tot-sep"></div>
-          <div class="tot-item">
-            <span class="tot-value" style="color:#ffe082;" id="sumEvacues">0</span>
-            <span class="tot-label">Evacues</span>
-          </div>
+          <div class="tot-item"><span class="tot-value" style="color:#ffe082;" id="sumEvacues">0</span><span class="tot-label">Evacues</span></div>
           <div class="tot-sep"></div>
-          <div class="tot-item">
-            <span class="tot-value" style="color:#ef9a9a;" id="sumDecedes">0</span>
-            <span class="tot-label">Decedes</span>
-          </div>
-          <div class="tot-grand">
-            TOTAL CONSULTANTS : <strong id="sumTotal" style="font-size:1.1rem;">0</strong>
-          </div>
+          <div class="tot-item"><span class="tot-value" style="color:#ef9a9a;" id="sumDecedes">0</span><span class="tot-label">Decedes</span></div>
+          <div class="tot-grand">TOTAL : <strong id="sumTotal" style="font-size:1.1rem;">0</strong></div>
         </div>
       </div>
     </div>
 
-    <!-- Observations -->
     <div class="card border-0 shadow-sm mb-3">
-      <div class="card-header card-header-green py-2">
-        <i class="bi bi-chat-left-text"></i> Observations / Commentaires
-      </div>
+      <div class="card-header card-header-green py-2"><i class="bi bi-chat-left-text"></i> Observations</div>
       <div class="card-body">
-        <textarea name="observations" class="form-control" rows="2"
-                  placeholder="Signaler tout evenement particulier (epidemie, afflux, conditions specifiques...)">{{ fiche.observations if fiche else '' }}</textarea>
+        <textarea name="observations" class="form-control" rows="2" placeholder="Signaler tout evenement particulier...">{{ fiche.observations if fiche else '' }}</textarea>
       </div>
     </div>
 
-    <!-- Boutons desktop -->
     <div class="d-none d-md-flex gap-2 mb-4">
-      <button type="submit" class="btn btn-success btn-lg px-5" id="submitBtnDesktop">
-        <i class="bi bi-save2-fill"></i> Enregistrer la fiche
-      </button>
+      <button type="submit" class="btn btn-success btn-lg px-5"><i class="bi bi-save2-fill"></i> Enregistrer</button>
       <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline-secondary btn-lg"
-         onclick="if(hasChanges) return confirm('Des modifications non sauvegardees seront perdues. Quitter ?');">
-        <i class="bi bi-arrow-left"></i> Retour
-      </a>
+         onclick="if(hasChanges)return confirm('Quitter sans sauvegarder ?');"><i class="bi bi-arrow-left"></i> Retour</a>
     </div>
-
-    <!-- Barre fixe mobile -->
     <div class="mobile-save-bar">
-      <button type="submit" class="btn btn-success">
-        <i class="bi bi-save2-fill"></i> Enregistrer
-      </button>
+      <button type="submit" class="btn btn-success"><i class="bi bi-save2-fill"></i> Enregistrer</button>
       <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline-secondary"
-         onclick="if(hasChanges) return confirm('Quitter sans sauvegarder ?');">
-        <i class="bi bi-arrow-left"></i> Retour
-      </a>
+         onclick="if(hasChanges)return confirm('Quitter sans sauvegarder ?');"><i class="bi bi-arrow-left"></i> Retour</a>
     </div>
-
   </form>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script>
-/* ============================================================
-   Saisie — Logique interactive
-   ============================================================ */
-
-var hasChanges = false;
-var showFilledOnly = false;
-
-// ---- Mobile sticky bar padding ----
-function updateStickyPadding() {
-  if (window.innerWidth < 768) {
-    document.body.classList.add('has-sticky-bar');
-  } else {
-    document.body.classList.remove('has-sticky-bar');
-  }
-}
-updateStickyPadding();
-window.addEventListener('resize', updateStickyPadding);
-
-// ---- Select all on focus ----
-document.querySelectorAll('.saisie-input').forEach(function(inp) {
-  inp.addEventListener('focus', function() { this.select(); });
-});
-
-// ---- Calcul total par ligne ----
-function updateTotal(id) {
-  var s = parseInt(document.getElementById('s_' + id).value) || 0;
-  var h = parseInt(document.getElementById('h_' + id).value) || 0;
-  var e = parseInt(document.getElementById('e_' + id).value) || 0;
-  var d = parseInt(document.getElementById('d_' + id).value) || 0;
-  var t = s + h + e;
-  var totCell = document.getElementById('tot_' + id);
-  totCell.textContent = t;
-
-  // Highlight row if any value > 0
-  var row = document.getElementById('row_' + id);
-  if (s > 0 || h > 0 || e > 0 || d > 0) {
-    row.classList.add('saisie-row-filled');
-  } else {
-    row.classList.remove('saisie-row-filled');
-  }
-
-  updateGrandTotals();
-  updateMPECounter();
-
-  // If filter-filled is active, hide/show this row
-  if (showFilledOnly) {
-    if (t === 0 && d === 0) {
-      row.classList.add('row-hidden');
-    } else {
-      row.classList.remove('row-hidden');
-    }
-  }
-}
-
-// ---- Totaux generaux ----
-function updateGrandTotals() {
-  var sumS = 0, sumH = 0, sumE = 0, sumD = 0;
-  document.querySelectorAll('.saisie-data-row').forEach(function(row) {
-    var id = row.id.replace('row_', '');
-    sumS += parseInt(document.getElementById('s_' + id).value) || 0;
-    sumH += parseInt(document.getElementById('h_' + id).value) || 0;
-    sumE += parseInt(document.getElementById('e_' + id).value) || 0;
-    sumD += parseInt(document.getElementById('d_' + id).value) || 0;
-  });
-  document.getElementById('sumSimples').textContent = sumS;
-  document.getElementById('sumHospit').textContent = sumH;
-  document.getElementById('sumEvacues').textContent = sumE;
-  document.getElementById('sumDecedes').textContent = sumD;
-  document.getElementById('sumTotal').textContent = sumS + sumH + sumE;
-}
-
-// ---- Compteur MPE ----
-function updateMPECounter() {
-  var mpeTotal = 0;
-  document.querySelectorAll('.saisie-data-row[data-mpe="1"]').forEach(function(row) {
-    var id = row.id.replace('row_', '');
-    var s = parseInt(document.getElementById('s_' + id).value) || 0;
-    var h = parseInt(document.getElementById('h_' + id).value) || 0;
-    var e = parseInt(document.getElementById('e_' + id).value) || 0;
-    mpeTotal += s + h + e;
-  });
-  var counter = document.getElementById('mpeCounter');
-  var countEl = document.getElementById('mpeCount');
-  if (mpeTotal > 0) {
-    countEl.textContent = mpeTotal;
-    counter.classList.remove('d-none');
-  } else {
-    counter.classList.add('d-none');
-  }
-}
-
-// ---- Marquer les modifications ----
-function markChanged(inp) {
-  hasChanges = true;
-  document.getElementById('draftBadge').classList.add('visible');
-  var val = parseInt(inp.value) || 0;
-  if (val > 0) {
-    inp.classList.add('changed');
-  } else {
-    inp.classList.remove('changed');
-  }
-}
-
-// ---- Reinitialiser tout ----
-function clearAll() {
-  if (!confirm('Effacer toutes les valeurs ?')) return;
-  document.querySelectorAll('.saisie-input').forEach(function(inp) {
-    inp.value = 0;
-    inp.classList.remove('changed');
-  });
-  document.querySelectorAll('[id^="tot_"]').forEach(function(el) {
-    el.textContent = '0';
-  });
-  document.querySelectorAll('.saisie-data-row').forEach(function(r) {
-    r.classList.remove('saisie-row-filled');
-  });
-  updateGrandTotals();
-  updateMPECounter();
-  hasChanges = true;
-  document.getElementById('draftBadge').classList.add('visible');
-}
-
-// ---- Toggle sections repliables ----
-function toggleSection(secId, headerRow) {
-  var isCollapsed = headerRow.classList.toggle('section-collapsed');
-  document.querySelectorAll('.saisie-data-row[data-sec="' + secId + '"]').forEach(function(r) {
-    if (isCollapsed) {
-      r.dataset.sectionHidden = '1';
-      r.classList.add('row-hidden');
-    } else {
-      delete r.dataset.sectionHidden;
-      if (!showFilledOnly || r.classList.contains('saisie-row-filled')) {
-        r.classList.remove('row-hidden');
-      }
-    }
-  });
-}
-
-// ---- Filtre : afficher seulement les lignes remplies ----
-function toggleFilledOnly() {
-  showFilledOnly = !showFilledOnly;
-  var btn = document.getElementById('toggleFilledBtn');
-  if (showFilledOnly) {
-    btn.classList.replace('btn-light', 'btn-success');
-    btn.title = 'Afficher toutes les lignes';
-  } else {
-    btn.classList.replace('btn-success', 'btn-light');
-    btn.title = 'Afficher seulement les lignes remplies';
-  }
-  document.querySelectorAll('.saisie-data-row').forEach(function(row) {
-    if (row.dataset.sectionHidden === '1') return;
-    if (showFilledOnly && !row.classList.contains('saisie-row-filled')) {
-      row.classList.add('row-hidden');
-    } else {
-      row.classList.remove('row-hidden');
-    }
-  });
-}
-
-// ---- Recherche en temps reel ----
-document.getElementById('searchInput').addEventListener('input', function() {
-  var query = this.value.toLowerCase().trim();
-  var anyVisible = false;
-  document.querySelectorAll('.saisie-data-row').forEach(function(row) {
-    var label = row.dataset.label || '';
-    var matches = label.indexOf(query) !== -1;
-    if (matches) {
-      row.classList.remove('row-hidden');
-      anyVisible = true;
-    } else {
-      row.classList.add('row-hidden');
-    }
-  });
-  // Show/hide section headers during search
-  document.querySelectorAll('.saisie-section-header').forEach(function(h) {
-    var secId = h.dataset.sec;
-    var hasVisible = false;
-    document.querySelectorAll('.saisie-data-row[data-sec="' + secId + '"]').forEach(function(r) {
-      if (!r.classList.contains('row-hidden')) hasVisible = true;
-    });
-    h.style.display = hasVisible ? '' : 'none';
-  });
-  // No results row
-  var noResults = document.getElementById('noResultsRow');
-  if (query && !anyVisible) {
-    noResults.classList.add('visible');
-  } else {
-    noResults.classList.remove('visible');
-  }
-  // Restore section visibility when search cleared
-  if (!query) {
-    document.querySelectorAll('.saisie-section-header').forEach(function(h) {
-      h.style.display = '';
-    });
-    document.querySelectorAll('.saisie-data-row').forEach(function(row) {
-      if (row.dataset.sectionHidden === '1') {
-        row.classList.add('row-hidden');
-      } else if (showFilledOnly && !row.classList.contains('saisie-row-filled')) {
-        row.classList.add('row-hidden');
-      } else {
-        row.classList.remove('row-hidden');
-      }
-    });
-  }
-});
-
-// ---- Initialisation des totaux ----
-updateGrandTotals();
-updateMPECounter();
-
-// ---- Avertissement avant de quitter avec modifications ----
-window.addEventListener('beforeunload', function(e) {
-  if (hasChanges) {
-    e.preventDefault();
-    e.returnValue = '';
-  }
-});
-
-// ---- Supprimer l'avertissement a la soumission ----
-document.getElementById('saisieFrm').addEventListener('submit', function() {
-  hasChanges = false;
-});
-</script>
+<script src="{{ url_for('static', filename='js/saisie.js') }}"></script>
 {% endblock %}
