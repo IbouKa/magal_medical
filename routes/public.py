@@ -16,6 +16,11 @@ def get_edition_active():
     return Edition.query.filter_by(active=True).order_by(Edition.annee.desc()).first()
 
 
+@public_bp.route('/presentation')
+def presentation():
+    return render_template('public/presentation.html')
+
+
 @public_bp.route('/')
 def index():
     # Rediriger directement les non-admin vers leurs stats filtrées
