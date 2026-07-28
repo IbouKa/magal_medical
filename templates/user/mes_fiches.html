@@ -1,85 +1,638 @@
 {% extends "base.html" %}
 {% block title %}Mes Fiches{% endblock %}
-{% block content %}
-<div class="container-fluid px-3">
-  <h2 class="page-title">
-    <i class="bi bi-folder2-open text-green"></i> Mes Fiches Soumises
-    {% if eps %}<small class="text-muted fs-5">— {{ eps.nom }}</small>{% endif %}
-  </h2>
 
-  {% if not fiches %}
-  <div class="alert alert-info">
-    <i class="bi bi-info-circle-fill"></i>
-    Aucune fiche soumise pour cette edition.
-    <a href="{{ url_for('user.saisie') }}" class="alert-link">Saisir la premiere fiche</a>
-  </div>
-  {% else %}
-    <div class="card border-0 shadow-sm">
-    <div class="card-header card-header-green d-flex align-items-center justify-content-between flex-wrap gap-2">
-      <span>
-        <i class="bi bi-list-ul"></i>
-        Fiches de l'edition {{ edition.annee if edition else '' }} &mdash; {{ fiches|length }} / 6 periodes
-      </span>
-      <a href="{{ url_for('user.export_fiches_excel') }}"
-         class="btn btn-sm btn-success d-inline-flex align-items-center gap-1"
-         title="Télécharger toutes mes fiches au format Excel">
-        <i class="bi bi-file-earmark-excel-fill"></i>
-        <span>Exporter Excel</span>
-      </a>
-    </div>
-              <th class="text-center">Evacues</th>
-              <th class="text-center text-danger">Decedes</th>
-              <th>Date saisie</th>
-              <th>Saisi par</th>
-              <th class="text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for f in fiches %}
-            <tr>
-              <td data-label="Periode">
-                <span class="badge bg-success fs-6">{{ f.periode }}</span>
-              </td>
-              <td class="text-center fw-bold text-green" data-label="Consultants">
-                {{ f.get_total_consultants() }}
-              </td>
-              <td class="text-center" data-label="Hospitalises">
-                <span class="{% if f.get_total_hospitalises() > 0 %}text-primary fw-bold{% endif %}">
-                  {{ f.get_total_hospitalises() }}
-                </span>
-              </td>
-              <td class="text-center" data-label="Evacues">
-                <span class="{% if f.get_total_evacues() > 0 %}text-warning fw-bold{% endif %}">
-                  {{ f.get_total_evacues() }}
-                </span>
-              </td>
-              <td class="text-center" data-label="Decedes">
-                <span class="{% if f.get_total_decedes() > 0 %}text-danger fw-bold{% endif %}">
-                  {{ f.get_total_decedes() }}
-                </span>
-              </td>
-              <td class="text-muted small" data-label="Date">
-                {{ f.date_saisie.strftime('%d/%m/%Y %H:%M') }}
-              </td>
-              <td class="small" data-label="Saisi par">{{ f.saisi_par or '-' }}</td>
-              <td class="text-center" data-label="">
-                <a href="{{ url_for('user.voir_fiche', fiche_id=f.id) }}" class="btn btn-sm btn-outline-info py-0">
-                  <i class="bi bi-eye"></i> Voir
-                </a>
-                <a href="{{ url_for('user.saisie', periode=f.periode) }}" class="btn btn-sm btn-outline-warning py-0 ms-1">
-                  <i class="bi bi-pencil"></i> Modifier
-                </a>
-                <a href="{{ url_for('user.export_fiche_excel', fiche_id=f.id) }}" class="btn btn-sm btn-outline-success py-0 ms-1" title="Exporter cette fiche en Excel">
-                  <i class="bi bi-file-earmark-excel"></i> Excel
-                </a>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+{% block extra_head %}
+<style>
+/* Page header hero */
+.fiches-hero {
+  background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-mid) 100%);
+  border-radius: 14px;
+  padding: 1.4rem 1.6rem;
+  color: #fff;
+  margin-bottom: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .8rem;
+}
+.fiches-hero h1 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -.01em;
+}
+.fiches-hero .subtitle {
+  font-size: .82rem;
+  opacity: .82;
+  margin-top: .15rem;
+}
+.fiches-hero-actions {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+/* Period progress tracker */
+.period-tracker {
+  background: #fff;
+  border: 1px solid #e3efe8;
+  border-radius: 12px;
+  padding: .9rem 1.2rem;
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.period-tracker-label {
+  font-size: .78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--green-dark);
+  white-space: nowrap;
+}
+.period-dots {
+  display: flex;
+  gap: .45rem;
+  flex-wrap: wrap;
+}
+.period-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .72rem;
+  font-weight: 700;
+  transition: transform .2s;
+  cursor: default;
+}
+.period-dot.done {
+  background: var(--green-mid);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(46,125,67,.35);
+}
+.period-dot.done:hover { transform: scale(1.12); }
+.period-dot.missing {
+  background: #f1f3f5;
+  color: #bbb;
+  border: 2px dashed #ccc;
+}
+.period-tracker-progress {
+  margin-left: auto;
+  font-size: .8rem;
+  color: var(--green-dark);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.period-tracker-bar {
+  width: 100%;
+  height: 6px;
+  background: #e8f5ec;
+  border-radius: 3px;
+  margin-top: .4rem;
+  overflow: hidden;
+}
+.period-tracker-fill {
+  height: 100%;
+  background: var(--green-mid);
+  border-radius: 3px;
+  transition: width .6s ease;
+}
+/* Summary stat cards */
+.fiches-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .75rem;
+  margin-bottom: 1.2rem;
+}
+.fiche-stat {
+  border-radius: 12px;
+  padding: .9rem 1rem;
+  position: relative;
+  overflow: hidden;
+}
+.fiche-stat-consultants { background: #e8f5ec; border-left: 4px solid var(--green-mid); }
+.fiche-stat-hospit      { background: #e3f2fd; border-left: 4px solid #1976d2; }
+.fiche-stat-evacues     { background: #fff8e1; border-left: 4px solid #f9a825; }
+.fiche-stat-decedes     { background: #fce4ec; border-left: 4px solid #c62828; }
+.fiche-stat-value {
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -.02em;
+}
+.fiche-stat-consultants .fiche-stat-value { color: var(--green-dark); }
+.fiche-stat-hospit .fiche-stat-value      { color: #1565c0; }
+.fiche-stat-evacues .fiche-stat-value     { color: #e65100; }
+.fiche-stat-decedes .fiche-stat-value     { color: #b71c1c; }
+.fiche-stat-label {
+  font-size: .7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #666;
+  margin-top: .2rem;
+}
+.fiche-stat-icon {
+  position: absolute;
+  right: .8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 2rem;
+  opacity: .12;
+}
+/* Desktop table */
+.fiches-table-wrap {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,.07);
+}
+.fiches-table-header {
+  background: var(--green-mid);
+  color: #fff;
+  padding: .85rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+.fiches-table-header .title-part {
+  font-size: .92rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+.table-fiches {
+  width: 100%;
+  background: #fff;
+  border-collapse: collapse;
+  font-size: .83rem;
+}
+.table-fiches thead th {
+  background: var(--green-dark);
+  color: #fff;
+  padding: .65rem .75rem;
+  font-size: .74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  white-space: nowrap;
+  border: none;
+}
+.table-fiches tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background .15s;
+}
+.table-fiches tbody tr:hover {
+  background: var(--green-pale);
+}
+.table-fiches tbody td {
+  padding: .7rem .75rem;
+  vertical-align: middle;
+  border: none;
+}
+.table-fiches tbody tr:last-child {
+  border-bottom: none;
+}
+.periode-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--green-mid);
+  color: #fff;
+  font-weight: 800;
+  font-size: .85rem;
+}
+.metric-cell { text-align: center; }
+.metric-val  { font-size: .95rem; font-weight: 700; }
+.metric-zero       { color: #aaa; font-weight: 400; }
+.metric-consultants { color: var(--green-dark); }
+.metric-hospit      { color: #1565c0; }
+.metric-evacues     { color: #e65100; }
+.metric-decedes     { color: #b71c1c; }
+.date-cell  { color: #666; font-size: .78rem; }
+.user-cell  { color: #555; font-size: .8rem; }
+.action-btns { display: flex; gap: .3rem; align-items: center; flex-wrap: wrap; }
+/* Mobile cards */
+.fiches-mobile-cards {
+  display: flex;
+  flex-direction: column;
+  gap: .8rem;
+}
+.fiche-card {
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,.07);
+  border: 1px solid #e8f5ec;
+}
+.fiche-card-header {
+  background: linear-gradient(90deg, var(--green-dark), var(--green-mid));
+  color: #fff;
+  padding: .65rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.fiche-card-periode {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-weight: 700;
+  font-size: .92rem;
+}
+.fiche-card-periode-num {
+  background: rgba(255,255,255,.25);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .82rem;
+  font-weight: 800;
+}
+.fiche-card-date { font-size: .72rem; opacity: .8; }
+.fiche-card-body { padding: .85rem 1rem; }
+.fiche-card-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: .5rem;
+  margin-bottom: .85rem;
+}
+.fiche-card-stat {
+  border-radius: 8px;
+  padding: .55rem .65rem;
+  display: flex;
+  flex-direction: column;
+  gap: .1rem;
+}
+.fiche-card-stat-label {
+  font-size: .65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  opacity: .75;
+}
+.fiche-card-stat-value {
+  font-size: 1.3rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.fcs-consult { background: #e8f5ec; color: var(--green-dark); }
+.fcs-hospit  { background: #e3f2fd; color: #1565c0; }
+.fcs-evacues { background: #fff8e1; color: #e65100; }
+.fcs-decedes { background: #fce4ec; color: #b71c1c; }
+.fiche-card-saisi {
+  font-size: .73rem;
+  color: #888;
+  margin-bottom: .7rem;
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+}
+.fiche-card-actions { display: flex; gap: .4rem; }
+.fiche-card-actions .btn {
+  flex: 1;
+  font-size: .78rem;
+  padding: .4rem .5rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .25rem;
+}
+/* Responsive */
+@media (min-width: 768px) {
+  .show-mobile { display: none !important; }
+}
+@media (max-width: 767px) {
+  .show-desktop { display: none !important; }
+  .fiches-hero h1 { font-size: 1.1rem; }
+  .fiches-stats { grid-template-columns: repeat(2, 1fr); }
+  .fiche-stat-value { font-size: 1.5rem; }
+}
+/* Empty state */
+.empty-fiches {
+  text-align: center;
+  padding: 3.5rem 1rem;
+  background: #fff;
+  border-radius: 14px;
+  border: 2px dashed #c8e6c9;
+}
+.empty-fiches-icon {
+  font-size: 4rem;
+  color: #a5d6a7;
+  margin-bottom: .75rem;
+}
+.empty-fiches h5 {
+  color: var(--green-dark);
+  font-weight: 700;
+  margin-bottom: .4rem;
+}
+.empty-fiches p {
+  color: #888;
+  font-size: .88rem;
+  max-width: 320px;
+  margin: 0 auto 1.2rem;
+}
+/* Hero buttons */
+.btn-export-all {
+  background: rgba(255,255,255,.15);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.4);
+  font-size: .8rem;
+  padding: .35rem .8rem;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  text-decoration: none;
+  transition: background .2s;
+}
+.btn-export-all:hover {
+  background: rgba(255,255,255,.28);
+  color: #fff;
+}
+.btn-new-fiche {
+  background: #fff;
+  color: var(--green-dark);
+  border: none;
+  font-size: .8rem;
+  font-weight: 700;
+  padding: .35rem .85rem;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,.12);
+  transition: box-shadow .2s, transform .15s;
+}
+.btn-new-fiche:hover {
+  color: var(--green-dark);
+  box-shadow: 0 4px 14px rgba(0,0,0,.18);
+  transform: translateY(-1px);
+}
+/* Totals row */
+.row-total-fiches td {
+  background: var(--green-pale);
+  font-weight: 700;
+  border-top: 2px solid var(--green-mid);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-3" style="max-width:1100px;">
+
+  {# ── Hero Header ── #}
+  <div class="fiches-hero">
+    <div>
+      <h1><i class="bi bi-folder2-open me-2"></i>Mes Fiches Soumises</h1>
+      <div class="subtitle">
+        {% if eps %}
+          <i class="bi bi-hospital me-1"></i>{{ eps.nom }}
+          {% if edition %}&nbsp;&middot;&nbsp;<i class="bi bi-calendar3 me-1"></i>Edition {{ edition.annee }}{% endif %}
+        {% else %}
+          Tableau de bord de vos fiches de collecte
+        {% endif %}
       </div>
     </div>
+    <div class="fiches-hero-actions">
+      {% if fiches %}
+      <a href="{{ url_for('user.export_fiches_excel') }}" class="btn-export-all">
+        <i class="bi bi-file-earmark-excel-fill"></i> Exporter tout
+      </a>
+      {% endif %}
+      <a href="{{ url_for('user.saisie') }}" class="btn-new-fiche">
+        <i class="bi bi-plus-circle-fill"></i> Nouvelle saisie
+      </a>
+    </div>
   </div>
+
+  {% if not fiches %}
+  {# ── Empty State ── #}
+  <div class="empty-fiches">
+    <div class="empty-fiches-icon"><i class="bi bi-folder2-open"></i></div>
+    <h5>Aucune fiche soumise</h5>
+    <p>Vous n'avez pas encore soumis de fiche pour cette edition. Commencez la saisie des maintenant.</p>
+    <a href="{{ url_for('user.saisie') }}" class="btn btn-success px-4 rounded-pill">
+      <i class="bi bi-pencil-fill me-1"></i> Saisir la premiere fiche
+    </a>
+  </div>
+
+  {% else %}
+
+  {# ── Period Progress Tracker ── #}
+  {% set n_done = fiches|length %}
+  {% set periodes_done = fiches|map(attribute='periode')|list %}
+  <div class="period-tracker">
+    <span class="period-tracker-label"><i class="bi bi-check2-circle me-1"></i>Periodes</span>
+    <div class="period-dots">
+      {% for p in range(1, 7) %}
+        {% if p|string in periodes_done or p in periodes_done %}
+        <div class="period-dot done" title="Periode {{ p }} — saisie">{{ p }}</div>
+        {% else %}
+        <div class="period-dot missing" title="Periode {{ p }} — non saisie">{{ p }}</div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    <span class="period-tracker-progress">{{ n_done }}&thinsp;/&thinsp;6</span>
+    <div class="period-tracker-bar w-100">
+      <div class="period-tracker-fill" style="width:{{ (n_done / 6 * 100)|round|int }}%;"></div>
+    </div>
+  </div>
+
+  {# ── Summary Stats ── #}
+  {% set total_c = namespace(v=0) %}
+  {% set total_h = namespace(v=0) %}
+  {% set total_e = namespace(v=0) %}
+  {% set total_d = namespace(v=0) %}
+  {% for f in fiches %}
+    {% set total_c.v = total_c.v + f.get_total_consultants() %}
+    {% set total_h.v = total_h.v + f.get_total_hospitalises() %}
+    {% set total_e.v = total_e.v + f.get_total_evacues() %}
+    {% set total_d.v = total_d.v + f.get_total_decedes() %}
+  {% endfor %}
+
+  <div class="fiches-stats">
+    <div class="fiche-stat fiche-stat-consultants">
+      <div class="fiche-stat-value">{{ total_c.v }}</div>
+      <div class="fiche-stat-label">Consultants</div>
+      <i class="bi bi-people-fill fiche-stat-icon"></i>
+    </div>
+    <div class="fiche-stat fiche-stat-hospit">
+      <div class="fiche-stat-value">{{ total_h.v }}</div>
+      <div class="fiche-stat-label">Hospitalises</div>
+      <i class="bi bi-hospital fiche-stat-icon"></i>
+    </div>
+    <div class="fiche-stat fiche-stat-evacues">
+      <div class="fiche-stat-value">{{ total_e.v }}</div>
+      <div class="fiche-stat-label">Evacues</div>
+      <i class="bi bi-truck fiche-stat-icon"></i>
+    </div>
+    <div class="fiche-stat fiche-stat-decedes">
+      <div class="fiche-stat-value">{{ total_d.v }}</div>
+      <div class="fiche-stat-label">Decedes</div>
+      <i class="bi bi-heartbreak fiche-stat-icon"></i>
+    </div>
+  </div>
+
+  {# ══════════════════════════════════════
+     DESKTOP TABLE (hidden on mobile)
+  ══════════════════════════════════════ #}
+  <div class="fiches-table-wrap show-desktop">
+    <div class="fiches-table-header">
+      <div class="title-part">
+        <i class="bi bi-list-ul"></i>
+        Fiches de l'edition {{ edition.annee if edition else '' }}
+        <span class="badge bg-white text-success ms-1">{{ fiches|length }} / 6 periodes</span>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table-fiches">
+        <thead>
+          <tr>
+            <th style="width:50px;">Per.</th>
+            <th class="text-center">Consultants</th>
+            <th class="text-center">Hospitalises</th>
+            <th class="text-center">Evacues</th>
+            <th class="text-center text-danger-subtle">Decedes</th>
+            <th>Date saisie</th>
+            <th>Saisi par</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in fiches %}
+          {% set c = f.get_total_consultants() %}
+          {% set h = f.get_total_hospitalises() %}
+          {% set e = f.get_total_evacues() %}
+          {% set d = f.get_total_decedes() %}
+          <tr>
+            <td>
+              <div class="periode-badge">{{ f.periode }}</div>
+            </td>
+            <td class="metric-cell">
+              <span class="metric-val metric-consultants">{{ c }}</span>
+            </td>
+            <td class="metric-cell">
+              <span class="metric-val {% if h > 0 %}metric-hospit{% else %}metric-zero{% endif %}">{{ h }}</span>
+            </td>
+            <td class="metric-cell">
+              <span class="metric-val {% if e > 0 %}metric-evacues{% else %}metric-zero{% endif %}">{{ e }}</span>
+            </td>
+            <td class="metric-cell">
+              <span class="metric-val {% if d > 0 %}metric-decedes{% else %}metric-zero{% endif %}">{{ d }}</span>
+            </td>
+            <td class="date-cell">
+              <i class="bi bi-clock me-1 opacity-50"></i>{{ f.date_saisie.strftime('%d/%m/%Y') }}<br>
+              <span class="opacity-50">{{ f.date_saisie.strftime('%H:%M') }}</span>
+            </td>
+            <td class="user-cell">
+              {% if f.saisi_par %}<i class="bi bi-person me-1 opacity-50"></i>{{ f.saisi_par }}
+              {% else %}<span class="text-muted">-</span>{% endif %}
+            </td>
+            <td>
+              <div class="action-btns">
+                <a href="{{ url_for('user.voir_fiche', fiche_id=f.id) }}"
+                   class="btn btn-sm btn-outline-primary py-0 px-2" title="Voir">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="{{ url_for('user.saisie', periode=f.periode) }}"
+                   class="btn btn-sm btn-outline-warning py-0 px-2" title="Modifier">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <a href="{{ url_for('user.export_fiche_excel', fiche_id=f.id) }}"
+                   class="btn btn-sm btn-outline-success py-0 px-2" title="Excel">
+                  <i class="bi bi-file-earmark-excel"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          <tr class="row-total-fiches">
+            <td><small class="fw-bold text-uppercase" style="font-size:.7rem;letter-spacing:.04em;color:var(--green-dark);">Total</small></td>
+            <td class="metric-cell"><span class="metric-val metric-consultants">{{ total_c.v }}</span></td>
+            <td class="metric-cell"><span class="metric-val metric-hospit">{{ total_h.v }}</span></td>
+            <td class="metric-cell"><span class="metric-val metric-evacues">{{ total_e.v }}</span></td>
+            <td class="metric-cell"><span class="metric-val metric-decedes">{{ total_d.v }}</span></td>
+            <td colspan="3"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {# MOBILE CARDS #}
+  <div class="fiches-mobile-cards show-mobile">
+    {% for f in fiches %}
+    {% set c = f.get_total_consultants() %}
+    {% set h = f.get_total_hospitalises() %}
+    {% set e = f.get_total_evacues() %}
+    {% set d = f.get_total_decedes() %}
+    <div class="fiche-card">
+      <div class="fiche-card-header">
+        <div class="fiche-card-periode">
+          <div class="fiche-card-periode-num">{{ f.periode }}</div>
+          Periode {{ f.periode }}
+        </div>
+        <div class="fiche-card-date">
+          <i class="bi bi-clock me-1"></i>{{ f.date_saisie.strftime('%d/%m/%Y') }}
+        </div>
+      </div>
+      <div class="fiche-card-body">
+        <div class="fiche-card-stats">
+          <div class="fiche-card-stat fcs-consult">
+            <div class="fiche-card-stat-label">Consultants</div>
+            <div class="fiche-card-stat-value">{{ c }}</div>
+          </div>
+          <div class="fiche-card-stat fcs-hospit">
+            <div class="fiche-card-stat-label">Hospitalises</div>
+            <div class="fiche-card-stat-value">{{ h }}</div>
+          </div>
+          <div class="fiche-card-stat fcs-evacues">
+            <div class="fiche-card-stat-label">Evacues</div>
+            <div class="fiche-card-stat-value">{{ e }}</div>
+          </div>
+          <div class="fiche-card-stat fcs-decedes">
+            <div class="fiche-card-stat-label">Decedes</div>
+            <div class="fiche-card-stat-value">{{ d }}</div>
+          </div>
+        </div>
+        {% if f.saisi_par %}
+        <div class="fiche-card-saisi">
+          <i class="bi bi-person-circle"></i>{{ f.saisi_par }}
+        </div>
+        {% endif %}
+        <div class="fiche-card-actions">
+          <a href="{{ url_for('user.voir_fiche', fiche_id=f.id) }}"
+             class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-eye"></i> Voir
+          </a>
+          <a href="{{ url_for('user.saisie', periode=f.periode) }}"
+             class="btn btn-outline-warning btn-sm">
+            <i class="bi bi-pencil"></i> Modifier
+          </a>
+          <a href="{{ url_for('user.export_fiche_excel', fiche_id=f.id) }}"
+             class="btn btn-outline-success btn-sm">
+            <i class="bi bi-file-earmark-excel"></i> Excel
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
   {% endif %}
 </div>
 {% endblock %}
