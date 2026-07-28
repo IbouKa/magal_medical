@@ -19,13 +19,6 @@ Développée avec **Python Flask + PostgreSQL**, déployée sur **Railway**.
 
 ## 👥 Niveaux d'accès
 
-### 🔓 Public (sans connexion)
-- Statistiques globales : consultants, hospitalisés, évacués, décès
-- Filtres par période (J-2 → J+3) et par zone/district
-- Graphiques d'évolution et de répartition géographique
-- Top 10 affections + Maladies à Potentiel Épidémique (MPE)
-- Taux de complétude des soumissions en temps réel
-
 ### 👨‍⚕️ Responsable EPS — Poste de Santé / Centre de Santé / Hôpital
 - Tableau de bord personnel avec statut des 6 périodes
 - **Saisie de la fiche journalière** (32 affections × 4 colonnes)

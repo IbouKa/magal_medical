@@ -1,0 +1,25 @@
+{
+  "name": "Magal Médical 2025 — Région Médicale de Diourbel",
+  "short_name": "Magal Médical",
+  "description": "Système de surveillance épidémiologique — Grand Magal de Touba",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#1a6b3c",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/static/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
