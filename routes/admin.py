@@ -464,6 +464,47 @@ def api_completude_data():
 #            hospitalisés | Evacuées | décédés | Structures pps/CS | Edition
 # Respecte les filtres période et district actifs sur la page Rapports
 # ─────────────────────────────────────────────────────────────────────────────
+@admin_bp.route('/rapports/supprimer-donnees', methods=['POST'])
+@login_required
+@admin_required
+def supprimer_donnees_rapport():
+    """Supprime toutes les fiches journalières (et leurs lignes) correspondant aux filtres actifs."""
+    edition = get_edition_active()
+    if not edition:
+        flash("Aucune edition active.", "warning")
+        return redirect(url_for('admin.rapports'))
+
+    selected_periode = request.form.get('periode', '')
+    selected_district = request.form.get('district', '')
+
+    # Construire la requête avec les mêmes filtres que la vue rapports
+    query = FicheJournaliere.query.filter_by(edition_id=edition.id)
+
+    if selected_periode:
+        query = query.filter(FicheJournaliere.periode == selected_periode)
+    if selected_district:
+        query = query.join(EPS, FicheJournaliere.eps_id == EPS.id).filter(
+            EPS.district_id == int(selected_district)
+        )
+
+    fiches = query.all()
+    nb = len(fiches)
+
+    for fiche in fiches:
+        db.session.delete(fiche)
+
+    db.session.commit()
+
+    if nb > 0:
+        flash(f"{nb} fiche(s) supprimee(s) avec toutes leurs lignes de consultation.", "success")
+    else:
+        flash("Aucune fiche trouvee pour ces filtres.", "info")
+
+    return redirect(url_for('admin.rapports',
+                            periode=selected_periode,
+                            district=selected_district))
+
+
 @admin_bp.route('/rapports/export-excel')
 @login_required
 @admin_required

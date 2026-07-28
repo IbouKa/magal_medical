@@ -46,6 +46,17 @@
             <span>Exporter Excel</span>
           </a>
         </div>
+        {% if rapport %}
+        <div class="col-auto ms-auto">
+          <button type="button"
+                  class="btn btn-sm btn-danger d-inline-flex align-items-center gap-1"
+                  data-bs-toggle="modal" data-bs-target="#modalSupprimerDonnees"
+                  title="Supprimer les données filtrées">
+            <i class="bi bi-trash3-fill"></i>
+            <span>Supprimer données</span>
+          </button>
+        </div>
+        {% endif %}
       </form>
     </div>
   </div>
@@ -111,6 +122,74 @@
             </tr>
           </tfoot>
         </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Confirmation Suppression -->
+<div class="modal fade" id="modalSupprimerDonnees" tabindex="-1"
+     aria-labelledby="modalSupprimerLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-danger">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="modalSupprimerLabel">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          Supprimer les données filtrées
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+          <i class="bi bi-shield-exclamation fs-5"></i>
+          <span><strong>Action irréversible.</strong> Les données supprimées ne pourront pas être récupérées.</span>
+        </div>
+        <p class="mb-2">Vous allez supprimer définitivement toutes les fiches journalières et leurs lignes de consultation correspondant aux filtres actifs :</p>
+        <table class="table table-sm table-bordered mb-3">
+          <tr>
+            <th class="text-muted small" style="width:35%">Édition</th>
+            <td class="fw-semibold">{{ edition.annee if edition else '—' }}</td>
+          </tr>
+          <tr>
+            <th class="text-muted small">Période</th>
+            <td class="fw-semibold">
+              {% if selected_periode %}
+                <span class="badge bg-warning text-dark">{{ selected_periode }}</span>
+              {% else %}
+                <span class="text-muted fst-italic">Toutes les périodes</span>
+              {% endif %}
+            </td>
+          </tr>
+          <tr>
+            <th class="text-muted small">Zone / District</th>
+            <td class="fw-semibold">
+              {% if selected_district %}
+                {% for d in districts %}{% if d.id|string == selected_district %}{{ d.nom }}{% endif %}{% endfor %}
+              {% else %}
+                <span class="text-muted fst-italic">Toutes les zones</span>
+              {% endif %}
+            </td>
+          </tr>
+        </table>
+        <p class="mb-0 text-muted small">
+          <i class="bi bi-info-circle me-1"></i>
+          {{ rapport | length }} affection(s) affichée(s) — toutes les fiches sources seront supprimées.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1"></i>Annuler
+        </button>
+        <form method="POST"
+              action="{{ url_for('admin.supprimer_donnees_rapport') }}"
+              class="d-inline">
+          <input type="hidden" name="periode"  value="{{ selected_periode }}">
+          <input type="hidden" name="district" value="{{ selected_district }}">
+          <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash3-fill me-1"></i>Confirmer la suppression
+          </button>
+        </form>
       </div>
     </div>
   </div>
