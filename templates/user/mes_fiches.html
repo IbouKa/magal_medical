@@ -413,9 +413,6 @@
         <i class="bi bi-file-earmark-excel-fill"></i> Exporter tout
       </a>
       {% endif %}
-      <a href="{{ url_for('user.saisie') }}" class="btn-new-fiche">
-        <i class="bi bi-plus-circle-fill"></i> Nouvelle saisie
-      </a>
     </div>
   </div>
 
@@ -432,25 +429,7 @@
 
   {% else %}
 
-  {# ── Period Progress Tracker ── #}
-  {% set n_done = fiches|length %}
-  {% set periodes_done = fiches|map(attribute='periode')|list %}
-  <div class="period-tracker">
-    <span class="period-tracker-label"><i class="bi bi-check2-circle me-1"></i>Periodes</span>
-    <div class="period-dots">
-      {% for p in range(1, 7) %}
-        {% if p|string in periodes_done or p in periodes_done %}
-        <div class="period-dot done" title="Periode {{ p }} — saisie">{{ p }}</div>
-        {% else %}
-        <div class="period-dot missing" title="Periode {{ p }} — non saisie">{{ p }}</div>
-        {% endif %}
-      {% endfor %}
-    </div>
-    <span class="period-tracker-progress">{{ n_done }}&thinsp;/&thinsp;6</span>
-    <div class="period-tracker-bar w-100">
-      <div class="period-tracker-fill" style="width:{{ (n_done / 6 * 100)|round|int }}%;"></div>
-    </div>
-  </div>
+ 
 
   {# ── Summary Stats ── #}
   {% set total_c = namespace(v=0) %}
@@ -463,29 +442,6 @@
     {% set total_e.v = total_e.v + f.get_total_evacues() %}
     {% set total_d.v = total_d.v + f.get_total_decedes() %}
   {% endfor %}
-
-  <div class="fiches-stats">
-    <div class="fiche-stat fiche-stat-consultants">
-      <div class="fiche-stat-value">{{ total_c.v }}</div>
-      <div class="fiche-stat-label">Consultants</div>
-      <i class="bi bi-people-fill fiche-stat-icon"></i>
-    </div>
-    <div class="fiche-stat fiche-stat-hospit">
-      <div class="fiche-stat-value">{{ total_h.v }}</div>
-      <div class="fiche-stat-label">Hospitalises</div>
-      <i class="bi bi-hospital fiche-stat-icon"></i>
-    </div>
-    <div class="fiche-stat fiche-stat-evacues">
-      <div class="fiche-stat-value">{{ total_e.v }}</div>
-      <div class="fiche-stat-label">Evacues</div>
-      <i class="bi bi-truck fiche-stat-icon"></i>
-    </div>
-    <div class="fiche-stat fiche-stat-decedes">
-      <div class="fiche-stat-value">{{ total_d.v }}</div>
-      <div class="fiche-stat-label">Decedes</div>
-      <i class="bi bi-heartbreak fiche-stat-icon"></i>
-    </div>
-  </div>
 
   {# ══════════════════════════════════════
      DESKTOP TABLE (hidden on mobile)
