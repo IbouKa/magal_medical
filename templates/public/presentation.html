@@ -3,34 +3,34 @@
 {% block title %}Présentation — Surveillance Épidémiologique Grand Magal{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container py-3 py-md-5">
   <div class="row justify-content-center">
-    <div class="col-lg-8">
+    <div class="col-12 col-md-10 col-lg-8">
 
       <!-- En-tête -->
-      <div class="text-center mb-4">
-        <span class="badge bg-success fs-6 mb-2">Région Médicale de Diourbel</span>
-        <h1 class="display-5 fw-bold text-success">
+      <div class="text-center mb-3 mb-md-4 px-2">
+        <span class="badge bg-success mb-2" style="font-size:.8rem;">Région Médicale de Diourbel</span>
+        <h1 class="fw-bold text-success" style="font-size: clamp(1.4rem, 5vw, 2.2rem); line-height:1.2;">
           🏥 Surveillance Épidémiologique<br>Grand Magal de Touba
         </h1>
-        <p class="text-muted">Application web — Édition 2025</p>
+        <p class="text-muted small mb-0">Application web — Édition 2025</p>
       </div>
 
-      <hr class="border-success border-2 opacity-50 mb-4">
+      <hr class="border-success border-2 opacity-50 mb-3 mb-md-4">
 
       <!-- Corps de la présentation -->
       <div class="card shadow-sm border-0">
-        <div class="card-body p-4 fs-5 lh-lg">
+        <div class="card-body p-3 p-md-4" style="font-size: clamp(.9rem, 2.5vw, 1.05rem); line-height: 1.7;">
 
-          <p>
+          <p class="mb-3">
             L'application de <strong>Gestion des Données Médicales du Grand Magal de Touba</strong>
             est un outil numérique de surveillance épidémiologique développé pour la
-            <strong>l'équipe de gestion des données sanitaires du Magal</strong>. Elle permet une collecte, un suivi et
+            <strong>Région Médicale de Diourbel</strong>. Elle permet une collecte, un suivi et
             une analyse en temps réel des données sanitaires produites lors de cet événement
             religieux majeur qui rassemble plusieurs millions de pèlerins chaque année.
           </p>
 
-          <p>
+          <p class="mb-3">
             La plateforme couvre <strong>46 Établissements de Prestation de Services (EPS)</strong>
             répartis sur <strong>10 districts et zones sanitaires</strong>, sur
             <strong>6 périodes de surveillance</strong> (J-2 à J+3). Elle enregistre
@@ -39,16 +39,14 @@
             telles que la méningite, la rougeole et le choléra.
           </p>
 
-          <p>
-            Trois profils d'accès structurent l'application :
-          </p>
-          <ul>
-            <li><strong>Le public</strong> consulte les statistiques globales et les graphiques d'évolution.</li>
-            <li><strong>Le responsable EPS</strong> saisit la fiche journalière (consultants, hospitalisés, évacués, décès).</li>
-            <li><strong>L'administrateur</strong> supervise l'ensemble, génère des rapports et suit la complétude des soumissions.</li>
+          <p class="mb-2">Trois profils d'accès structurent l'application :</p>
+          <ul class="mb-3 ps-3">
+            <li class="mb-1"><strong>Le public</strong> consulte les statistiques globales et les graphiques d'évolution.</li>
+            <li class="mb-1"><strong>Le responsable EPS</strong> saisit la fiche journalière (consultants, hospitalisés, évacués, décès).</li>
+            <li class="mb-1"><strong>L'administrateur</strong> supervise l'ensemble, génère des rapports et suit la complétude des soumissions.</li>
           </ul>
 
-          <p>
+          <p class="mb-0">
             Développée en <strong>Python Flask</strong> avec une base de données <strong>PostgreSQL</strong>,
             l'application est déployée sur <strong>Railway</strong> et fonctionne également
             <strong>hors-ligne</strong> grâce à une architecture PWA (Progressive Web App).
@@ -60,39 +58,39 @@
       </div>
 
       <!-- Chiffres clés -->
-      <div class="row text-center mt-4 g-3">
+      <div class="row text-center mt-3 mt-md-4 g-2 g-md-3">
         <div class="col-4">
-          <div class="card border-success">
-            <div class="card-body py-3">
-              <div class="display-6 fw-bold text-success">46</div>
-              <div class="small text-muted">EPS couverts</div>
+          <div class="card border-success h-100">
+            <div class="card-body py-2 py-md-3 px-1">
+              <div class="fw-bold text-success" style="font-size: clamp(1.4rem, 6vw, 2.2rem);">46</div>
+              <div class="text-muted" style="font-size: clamp(.65rem, 2.5vw, .85rem);">EPS couverts</div>
             </div>
           </div>
         </div>
         <div class="col-4">
-          <div class="card border-success">
-            <div class="card-body py-3">
-              <div class="display-6 fw-bold text-success">32</div>
-              <div class="small text-muted">Affections suivies</div>
+          <div class="card border-success h-100">
+            <div class="card-body py-2 py-md-3 px-1">
+              <div class="fw-bold text-success" style="font-size: clamp(1.4rem, 6vw, 2.2rem);">32</div>
+              <div class="text-muted" style="font-size: clamp(.65rem, 2.5vw, .85rem);">Affections suivies</div>
             </div>
           </div>
         </div>
         <div class="col-4">
-          <div class="card border-success">
-            <div class="card-body py-3">
-              <div class="display-6 fw-bold text-success">6</div>
-              <div class="small text-muted">Périodes (J-2→J+3)</div>
+          <div class="card border-success h-100">
+            <div class="card-body py-2 py-md-3 px-1">
+              <div class="fw-bold text-success" style="font-size: clamp(1.4rem, 6vw, 2.2rem);">6</div>
+              <div class="text-muted" style="font-size: clamp(.65rem, 2.5vw, .85rem);">Périodes J-2→J+3</div>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Boutons d'action -->
-      <div class="text-center mt-4">
-        <a href="{{ url_for('public.stats') }}" class="btn btn-success btn-lg me-2">
+      <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-3 mt-md-4 px-1">
+        <a href="{{ url_for('public.stats') }}" class="btn btn-success btn-lg w-100 w-sm-auto">
           📊 Voir les statistiques
         </a>
-        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-success btn-lg">
+        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-success btn-lg w-100 w-sm-auto">
           🔐 Se connecter
         </a>
       </div>
