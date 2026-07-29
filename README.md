@@ -35,6 +35,7 @@ Développée avec **Python Flask + PostgreSQL**, déployée sur **Railway**.
 - **Rapports consolidés** filtrables par période et district
 - Suivi de complétude en temps réel (46 EPS)
 
+
 ---
 
 ## 📊 Données de référence (maquette Excel Magal 2025)
