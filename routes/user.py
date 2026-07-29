@@ -16,6 +16,52 @@ from extensions import db
 user_bp = Blueprint('user', __name__)
 PERIODES = ['J-2', 'J-1', 'J', 'J+1', 'J+2', 'J+3']
 
+# Services d'aide au diagnostic — source : feuille "scevice_d'aide" du maquette Excel
+# Structure : groupes (LABO, RADIO, ECHO, Scanner, Bloc) avec sous-champs
+SERVICES_AIDE = [
+    {
+        'nom': 'LABO',
+        'label': 'Laboratoire',
+        'champs': [
+            ('labo_malades', 'Nbr de malades'),
+            ('labo_examens', "Nbre d'examens"),
+            ('labo_poches',  "Poches à sang dist."),
+        ]
+    },
+    {
+        'nom': 'RADIO',
+        'label': 'Radiologie',
+        'champs': [
+            ('radio_malades', 'Nbr de malades'),
+            ('radio_films',   'Nbre de films'),
+            ('radio_examens', "Nbre d'examens"),
+        ]
+    },
+    {
+        'nom': 'ECHO',
+        'label': 'Echographie',
+        'champs': [
+            ('echo_malades', 'Nbr de malades'),
+            ('echo_films',   'Nbre de films'),
+        ]
+    },
+    {
+        'nom': 'SCANNER',
+        'label': 'Scanner',
+        'champs': [
+            ('scanner_malades', 'Nbr de malades'),
+            ('scanner_films',   'Nbre de films'),
+        ]
+    },
+    {
+        'nom': 'BLOC',
+        'label': 'Bloc opératoire',
+        'champs': [
+            ('bloc', 'Nbr actes'),
+        ]
+    },
+]
+
 
 def get_edition_active():
     return Edition.query.filter_by(active=True).order_by(Edition.annee.desc()).first()
@@ -95,6 +141,12 @@ def saisie():
         for ligne in fiche.lignes:
             lignes_map[ligne.affection_id] = ligne
 
+    # Charger les données des services d'aide existants
+    services_diag_map = {}
+    if fiche and eps.type_eps == 'hopital':
+        for sd in ServiceDiagnostic.query.filter_by(fiche_id=fiche.id).all():
+            services_diag_map[sd.service] = sd.valeur
+
     if request.method == 'POST':
         periode_post = request.form.get('periode', periode)
         if periode_post not in PERIODES:
@@ -138,6 +190,19 @@ def saisie():
             ligne.evacues = max(0, evacues)
             ligne.decedes = max(0, decedes)
 
+        # Sauvegarder les services d'aide (hôpitaux uniquement)
+        if eps.type_eps == 'hopital':
+            for svc in SERVICES_AIDE:
+                for key, _label in svc['champs']:
+                    valeur = int(request.form.get(f'svc_{key}', 0) or 0)
+                    sd = ServiceDiagnostic.query.filter_by(
+                        fiche_id=fiche.id, service=key
+                    ).first()
+                    if not sd:
+                        sd = ServiceDiagnostic(fiche_id=fiche.id, service=key)
+                        db.session.add(sd)
+                    sd.valeur = max(0, valeur)
+
         db.session.commit()
         flash(f'Fiche {periode_post} enregistree avec succes.', 'success')
         return redirect(url_for('user.dashboard'))
@@ -147,7 +212,9 @@ def saisie():
                            fiche=fiche, affections=affections,
                            lignes_map=lignes_map,
                            periodes=PERIODES,
-                           selected_periode=periode)
+                           selected_periode=periode,
+                           services_aide=SERVICES_AIDE,
+                           services_diag_map=services_diag_map)
 
 
 @user_bp.route('/mes-fiches')

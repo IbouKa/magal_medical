@@ -91,6 +91,52 @@
       </div>
     </div>
 
+    {% if eps.type_eps == 'hopital' %}
+    <!-- Services d'aide au diagnostic — Hôpital uniquement -->
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header card-header-green d-flex justify-content-between align-items-center"
+           style="cursor:pointer;"
+           data-bs-toggle="collapse" data-bs-target="#collapseServicesAide"
+           aria-expanded="{{ 'true' if services_diag_map else 'false' }}"
+           aria-controls="collapseServicesAide">
+        <span>
+          <i class="bi bi-hospital me-1"></i>
+          Services d'Aide au Diagnostic
+          <span class="badge bg-warning text-dark ms-1 small">Hôpital</span>
+          {% if services_diag_map %}
+          <span class="badge bg-success ms-1 small"><i class="bi bi-check-circle-fill"></i> Données saisies</span>
+          {% endif %}
+        </span>
+        <i class="bi bi-chevron-{% if services_diag_map %}up{% else %}down{% endif %}" id="iconServicesAide"></i>
+      </div>
+      <div class="collapse {% if services_diag_map %}show{% endif %}" id="collapseServicesAide">
+        <div class="card-body">
+          <p class="text-muted small mb-3">
+            <i class="bi bi-info-circle me-1"></i>
+            Saisir les activités de chaque service d'aide au diagnostic pour cette période.
+          </p>
+          {% for svc in services_aide %}
+          <div class="mb-3">
+            <div class="fw-bold text-green small mb-2 border-bottom pb-1">
+              <i class="bi bi-building me-1"></i>{{ svc.label }}
+            </div>
+            <div class="row g-2">
+              {% for key, label in svc.champs %}
+              <div class="col-6 col-sm-4 col-md-3">
+                <label class="form-label small text-muted mb-1">{{ label }}</label>
+                <input type="number" name="svc_{{ key }}" min="0"
+                       value="{{ services_diag_map.get(key, 0) }}"
+                       class="form-control form-control-sm text-center">
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
     <div class="card border-0 shadow-sm mb-3">
       <div class="card-header card-header-green py-2"><i class="bi bi-chat-left-text"></i> Observations</div>
       <div class="card-body">
