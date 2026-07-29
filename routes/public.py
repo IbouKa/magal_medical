@@ -83,6 +83,38 @@ def stats():
         LigneConsultation.cas_simples + LigneConsultation.hospitalises + LigneConsultation.evacues
     ).desc()).limit(10).all()
 
+    # ── Tableau de morbidité complet (toutes affections actives, triées par total) ──
+    all_affections = Affection.query.filter_by(actif=True).order_by(Affection.numero).all()
+
+    # Totaux par affection avec les mêmes filtres
+    morb_base = db.session.query(
+        LigneConsultation.affection_id,
+        func.sum(LigneConsultation.cas_simples + LigneConsultation.hospitalises + LigneConsultation.evacues).label('total'),
+        func.sum(LigneConsultation.decedes).label('decedes'),
+    ).join(FicheJournaliere, LigneConsultation.fiche_id == FicheJournaliere.id).filter(
+        FicheJournaliere.edition_id == edition.id
+    )
+    if selected_periode:
+        morb_base = morb_base.filter(FicheJournaliere.periode == selected_periode)
+    if selected_district:
+        morb_base = morb_base.join(EPS, FicheJournaliere.eps_id == EPS.id).filter(
+            EPS.district_id == int(selected_district)
+        )
+    morb_map = {
+        row[0]: (row[1] or 0, row[2] or 0)
+        for row in morb_base.group_by(LigneConsultation.affection_id).all()
+    }
+
+    morbidite_raw = []
+    for aff in all_affections:
+        t, d = morb_map.get(aff.id, (0, 0))
+        morbidite_raw.append({'libelle': aff.libelle, 'total': t, 'decedes': d})
+
+    morbidite_raw.sort(key=lambda x: x['total'], reverse=True)
+    grand_total_morb = sum(r['total'] for r in morbidite_raw)
+    for r in morbidite_raw:
+        r['pct'] = round(r['total'] / grand_total_morb * 100, 2) if grand_total_morb > 0 else 0
+
     # Données par période
     periode_data = []
     for p in periodes:
@@ -154,6 +186,8 @@ def stats():
         'nb_eps_attendus': nb_eps_attendus,
         'nb_soumis': nb_soumis,
         'completude_pct': completude_pct,
+        'morbidite_data': morbidite_raw,
+        'grand_total_morb': grand_total_morb,
     }
 
     return render_template('public/stats.html',

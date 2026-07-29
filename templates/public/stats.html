@@ -131,7 +131,7 @@
   <!-- Charts Row -->
   <div class="row g-3 mb-3">
     <!-- Courbe par période -->
-    <div class="col-md-6">
+    <div class="col-md-4">
       <div class="card border-0 shadow-sm h-100">
         <div class="card-header card-header-green">
           <i class="bi bi-graph-up"></i> Évolution par Période
@@ -144,7 +144,7 @@
       </div>
     </div>
     <!-- Répartition par district -->
-    <div class="col-md-6">
+    <div class="col-md-4">
       <div class="card border-0 shadow-sm h-100">
         <div class="card-header card-header-green">
           <i class="bi bi-pie-chart-fill"></i> Répartition par Zone
@@ -152,6 +152,36 @@
         <div class="card-body">
           <div class="chart-container">
             <canvas id="chartDistrict"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Gravité -->
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header card-header-green">
+          <i class="bi bi-pie-chart"></i> Gravité
+        </div>
+        <div class="card-body">
+          <div class="chart-container">
+            <canvas id="chartGravite"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zone — Consultants par district (bar chart) -->
+  <div class="row g-3 mb-3">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header card-header-green">
+          <i class="bi bi-geo-alt-fill"></i> Zone
+          <span class="fw-normal small">(consultants par district / zone sanitaire)</span>
+        </div>
+        <div class="card-body">
+          <div style="position:relative; height:320px;">
+            <canvas id="chartZone"></canvas>
           </div>
         </div>
       </div>
@@ -232,6 +262,61 @@
                 </td></tr>
                 {% endfor %}
               </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau de Morbidité complet -->
+  <div class="row g-3 mt-1 mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header card-header-green d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-table"></i> Tableau de Morbidité</span>
+          <span class="small fw-normal">
+            Total : <strong>{{ "{:,}".format(stats.grand_total_morb).replace(',', ' ') }}</strong> consultants
+          </span>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm mb-0"
+                   style="font-size:.85rem;">
+              <thead style="background:#1a6b3c;color:white;text-align:center;">
+                <tr>
+                  <th style="width:90px;">CLASSEMENT</th>
+                  <th class="text-start">AFFECTIONS</th>
+                  <th style="width:110px;">NOMBRE</th>
+                  <th style="width:90px;">%</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in stats.morbidite_data %}
+                {% set rank = loop.index %}
+                <tr style="{% if rank <= 5 %}background:#ffe0b2;{% elif rank <= 10 %}background:#fff3e0;{% elif rank % 2 == 0 %}background:#f9f9f9;{% else %}background:#ffffff;{% endif %}">
+                  <td class="text-center fw-bold">
+                    {% if rank == 1 %}1<sup>er</sup>
+                    {% else %}{{ rank }}<sup>e</sup>
+                    {% endif %}
+                  </td>
+                  <td>{{ row.libelle }}</td>
+                  <td class="text-center fw-semibold">
+                    {% if row.total > 0 %}{{ "{:,}".format(row.total).replace(',', ' ') }}{% else %}-{% endif %}
+                  </td>
+                  <td class="text-center">
+                    {% if row.total > 0 %}{{ "%.2f"|format(row.pct) }}%{% else %}0.00%{% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+              <tfoot>
+                <tr style="background:#1a6b3c;color:white;font-weight:bold;text-align:center;">
+                  <td colspan="2" class="text-center">Total</td>
+                  <td>{{ "{:,}".format(stats.grand_total_morb).replace(',', ' ') }}</td>
+                  <td>100.00%</td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </div>
@@ -363,7 +448,122 @@ new Chart(document.getElementById('chartDistrict'), {
   options: {
     responsive: true, maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'right', labels: { font: { size: 10 }, boxWidth: 12 } }
+      legend: { position: 'right', labels: { font: { size: 10 }, boxWidth: 12 } },
+      datalabels: { display: false }
+    }
+  }
+});
+
+// ── Gravité (répartition par type de cas) ─────────────────────
+var graviteTotal = {{ (stats.total_simples + stats.total_hospit + stats.total_evacues + stats.total_decedes) | int }};
+var graviteData  = [
+  {{ stats.total_simples | int }},
+  {{ stats.total_hospit  | int }},
+  {{ stats.total_evacues | int }},
+  {{ stats.total_decedes | int }}
+];
+
+new Chart(document.getElementById('chartGravite'), {
+  type: 'pie',
+  data: {
+    labels: ['Cas simples', 'Hospitalisés', 'Évacués', 'Décédés'],
+    datasets: [{
+      data: graviteData,
+      backgroundColor: ['#5b9bd5', '#ffd700', '#b0c4de', '#c0392b'],
+      borderColor: '#ffffff',
+      borderWidth: 2
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { font: { size: 11 }, boxWidth: 14, padding: 8 }
+      },
+      datalabels: {
+        display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+        formatter: function(value, ctx) {
+          if (!graviteTotal) return '';
+          var pct = (value / graviteTotal * 100).toFixed(2);
+          var label = ctx.chart.data.labels[ctx.dataIndex];
+          return label + '\n' + pct + '%';
+        },
+        color: function(ctx) {
+          return ctx.dataIndex === 1 ? '#555' : '#fff';
+        },
+        font: { weight: 'bold', size: 10 },
+        textAlign: 'center'
+      },
+      tooltip: {
+        callbacks: {
+          label: function(ctx) {
+            var val = ctx.parsed;
+            var pct = graviteTotal > 0 ? (val / graviteTotal * 100).toFixed(2) : '0';
+            return ' ' + ctx.label + ' : ' + val.toLocaleString('fr-FR') + ' (' + pct + '%)';
+          }
+        }
+      }
+    }
+  }
+});
+
+// ── Zone — Consultants par district (bar chart) ───────────────
+new Chart(document.getElementById('chartZone'), {
+  type: 'bar',
+  data: {
+    labels: districtLabels,
+    datasets: [{
+      label: 'Total consultants',
+      data: districtTotals,
+      backgroundColor: 'rgba(91,155,213,0.82)',
+      borderColor: 'rgba(70,130,180,1)',
+      borderWidth: 1,
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { top: 30 } },
+    plugins: {
+      legend: { display: false },
+      datalabels: {
+        anchor: 'end',
+        align: 'top',
+        offset: 2,
+        formatter: function(value) {
+          return value > 0 ? value.toLocaleString('fr-FR') : '';
+        },
+        font: { weight: 'bold', size: 11 },
+        color: '#1a3d5c'
+      },
+      tooltip: {
+        callbacks: {
+          label: function(ctx) {
+            return ' ' + ctx.label + ' : ' + ctx.parsed.y.toLocaleString('fr-FR') + ' consultants';
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: function(v) { return v.toLocaleString('fr-FR'); },
+          font: { size: 11 }
+        },
+        grid: { color: 'rgba(0,0,0,0.07)' }
+      },
+      x: {
+        ticks: {
+          font: { size: 10 },
+          maxRotation: 15,
+          minRotation: 0
+        },
+        grid: { display: false }
+      }
     }
   }
 });
