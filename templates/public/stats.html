@@ -25,7 +25,7 @@
 
   {% if not edition %}
   <div class="alert alert-warning">
-    <i class="bi bi-exclamation-circle"></i> Aucune édition active pour le moment.
+    <i class="bi bi-exclamation-circle"></i> Aucune edition active pour le moment.
   </div>
   {% else %}
 
@@ -34,7 +34,7 @@
     <div class="card-body py-2">
       <form method="GET" class="d-flex flex-wrap gap-3 align-items-end filter-form">
         <div class="col-auto">
-          <label class="form-label fw-semibold mb-1 small">Période</label>
+          <label class="form-label fw-semibold mb-1 small">Periode</label>
           <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
             <div class="btn-group flex-nowrap">
               <a href="{{ url_for('public.stats', district=selected_district) }}"
@@ -73,7 +73,7 @@
         <div class="card-body">
           <p class="text-muted small mb-1">Total Consultants</p>
           <h3 class="fw-bold text-green mb-0">{{ "{:,}".format(stats.total_consultants).replace(',', ' ') }}</h3>
-          <small class="text-muted">Cas simples + hospitalisés + évacués</small>
+          <small class="text-muted">Cas simples + hospitalises + evacues</small>
         </div>
         <i class="bi bi-people-fill stat-icon text-success"></i>
       </div>
@@ -81,9 +81,9 @@
     <div class="col-6 col-md-3">
       <div class="card stat-card h-100 position-relative border-0 shadow-sm" style="border-left-color:#1976d2!important;">
         <div class="card-body">
-          <p class="text-muted small mb-1">Hospitalisés</p>
+          <p class="text-muted small mb-1">Hospitalises</p>
           <h3 class="fw-bold text-primary mb-0">{{ "{:,}".format(stats.total_hospit).replace(',', ' ') }}</h3>
-          <small class="text-muted">Cas graves hospitalisés</small>
+          <small class="text-muted">Cas graves hospitalises</small>
         </div>
         <i class="bi bi-hospital-fill stat-icon text-primary"></i>
       </div>
@@ -91,9 +91,9 @@
     <div class="col-6 col-md-3">
       <div class="card stat-card h-100 position-relative border-0 shadow-sm" style="border-left-color:#f57c00!important;">
         <div class="card-body">
-          <p class="text-muted small mb-1">Évacués</p>
+          <p class="text-muted small mb-1">Evacues</p>
           <h3 class="fw-bold text-warning mb-0">{{ "{:,}".format(stats.total_evacues).replace(',', ' ') }}</h3>
-          <small class="text-muted">Références et évacuations</small>
+          <small class="text-muted">References et evacuations</small>
         </div>
         <i class="bi bi-ambulance stat-icon text-warning"></i>
       </div>
@@ -101,21 +101,21 @@
     <div class="col-6 col-md-3">
       <div class="card stat-card h-100 position-relative border-0 shadow-sm" style="border-left-color:#c0392b!important;">
         <div class="card-body">
-          <p class="text-muted small mb-1">Décès</p>
+          <p class="text-muted small mb-1">Deces</p>
           <h3 class="fw-bold text-danger mb-0">{{ "{:,}".format(stats.total_decedes).replace(',', ' ') }}</h3>
-          <small class="text-muted">Décès enregistrés</small>
+          <small class="text-muted">Deces enregistres</small>
         </div>
         <i class="bi bi-exclamation-triangle-fill stat-icon text-danger"></i>
       </div>
     </div>
   </div>
 
-  <!-- Complétude -->
+  <!-- Completude -->
   <div class="card mb-3 border-0 shadow-sm">
     <div class="card-body py-2">
       <div class="d-flex justify-content-between align-items-center mb-1">
         <span class="small fw-semibold">
-          <i class="bi bi-check2-all text-success"></i> Taux de complétude
+          <i class="bi bi-check2-all text-success"></i> Taux de completude
         </span>
         <span class="small text-muted">
           {{ stats.nb_soumis }} / {{ stats.nb_eps_attendus }} EPS
@@ -128,13 +128,13 @@
     </div>
   </div>
 
-  <!-- Charts Row -->
+  <!-- Charts Row 1 -->
   <div class="row g-3 mb-3">
-    <!-- Courbe par période -->
+    <!-- Evolution par Periode -->
     <div class="col-md-4">
       <div class="card border-0 shadow-sm h-100">
         <div class="card-header card-header-green">
-          <i class="bi bi-graph-up"></i> Évolution par Période
+          <i class="bi bi-graph-up"></i> Evolution par Periode
         </div>
         <div class="card-body">
           <div class="chart-container">
@@ -143,11 +143,11 @@
         </div>
       </div>
     </div>
-    <!-- Répartition par district -->
+    <!-- Repartition par Zone -->
     <div class="col-md-4">
       <div class="card border-0 shadow-sm h-100">
         <div class="card-header card-header-green">
-          <i class="bi bi-pie-chart-fill"></i> Répartition par Zone
+          <i class="bi bi-pie-chart-fill"></i> Repartition par Zone
         </div>
         <div class="card-body">
           <div class="chart-container">
@@ -156,11 +156,11 @@
         </div>
       </div>
     </div>
-    <!-- Gravité -->
+    <!-- Gravite -->
     <div class="col-md-4">
       <div class="card border-0 shadow-sm h-100">
         <div class="card-header card-header-green">
-          <i class="bi bi-pie-chart"></i> Gravité
+          <i class="bi bi-pie-chart"></i> Gravite
         </div>
         <div class="card-body">
           <div class="chart-container">
@@ -171,7 +171,7 @@
     </div>
   </div>
 
-  <!-- Zone — Consultants par district (bar chart) -->
+  <!-- Zone consultants par district (bar) -->
   <div class="row g-3 mb-3">
     <div class="col-12">
       <div class="card border-0 shadow-sm">
@@ -188,13 +188,13 @@
     </div>
   </div>
 
-  <!-- CLASSEMENT — Top 10 Affections bar chart -->
+  <!-- CLASSEMENT Top 10 Affections -->
   <div class="row g-3 mb-3">
     <div class="col-12">
       <div class="card border-0 shadow-sm">
         <div class="card-header card-header-green">
           <i class="bi bi-bar-chart-fill"></i>
-          CLASSEMENT — Top 10 Affections <span class="fw-normal small">(% des consultants)</span>
+          CLASSEMENT &mdash; Top 10 Affections <span class="fw-normal small">(% des consultants)</span>
         </div>
         <div class="card-body">
           <div style="position:relative; height:360px;">
@@ -205,84 +205,19 @@
     </div>
   </div>
 
-  <div class="row g-3">
-    <!-- Top 10 Affections -->
-    <div class="col-md-6">
-      <div class="card border-0 shadow-sm">
-        <div class="card-header card-header-green">
-          <i class="bi bi-list-ol"></i> Top 10 Affections
-        </div>
-        <div class="card-body p-0 table-stack-wrap">
-          <div class="table-responsive">
-            <table class="table table-magal table-stack mb-0">
-              <thead>
-                <tr><th>#</th><th>Affection</th><th class="text-end">Cas</th></tr>
-              </thead>
-              <tbody>
-                {% for aff, total in stats.top_affections %}
-                <tr>
-                  <td class="fw-bold text-muted" data-label="#">{{ loop.index }}</td>
-                  <td data-label="Affection">{{ aff }}</td>
-                  <td class="text-end fw-bold text-green" data-label="Cas">{{ total or 0 }}</td>
-                </tr>
-                {% else %}
-                <tr><td colspan="3" class="text-center text-muted">Aucune donnée</td></tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- MPE -->
-    <div class="col-md-6">
-      <div class="card border-0 shadow-sm">
-        <div class="card-header" style="background:#c0392b;color:white;font-weight:600;">
-          <i class="bi bi-exclamation-triangle-fill"></i>
-          Maladies à Potentiel Épidémique (MPE)
-        </div>
-        <div class="card-body p-0 table-stack-wrap">
-          <div class="table-responsive">
-            <table class="table table-magal table-stack mb-0">
-              <thead>
-                <tr><th>Maladie</th><th class="text-end">Cas</th></tr>
-              </thead>
-              <tbody>
-                {% for aff, total in stats.mpe_data %}
-                {% if total and total > 0 %}
-                <tr class="table-warning row-mpe">
-                  <td data-label="Maladie"><i class="bi bi-exclamation-circle text-danger me-1"></i>{{ aff }}</td>
-                  <td class="text-end fw-bold text-danger" data-label="Cas">{{ total }}</td>
-                </tr>
-                {% endif %}
-                {% else %}
-                <tr><td colspan="2" class="text-center text-success">
-                  <i class="bi bi-check-circle"></i> Aucun cas MPE signalé
-                </td></tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Tableau de Morbidité complet -->
+  <!-- Tableau de Morbidite complet -->
   <div class="row g-3 mt-1 mb-4">
     <div class="col-12">
       <div class="card border-0 shadow-sm">
         <div class="card-header card-header-green d-flex justify-content-between align-items-center">
-          <span><i class="bi bi-table"></i> Tableau de Morbidité</span>
+          <span><i class="bi bi-table"></i> Tableau de Morbidite</span>
           <span class="small fw-normal">
             Total : <strong>{{ "{:,}".format(stats.grand_total_morb).replace(',', ' ') }}</strong> consultants
           </span>
         </div>
         <div class="card-body p-0">
           <div class="table-responsive">
-            <table class="table table-bordered table-sm mb-0"
-                   style="font-size:.85rem;">
+            <table class="table table-bordered table-sm mb-0" style="font-size:.85rem;">
               <thead style="background:#1a6b3c;color:white;text-align:center;">
                 <tr>
                   <th style="width:90px;">CLASSEMENT</th>
@@ -324,9 +259,7 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════════════════
-       SERVICE D'AIDE AU DIAGNOSTIC
-  ════════════════════════════════════════════════════════════════════════ -->
+  <!-- Services d'Aide au Diagnostic -->
   {% if stats.service_aide_data %}
   <div class="row g-3 mt-1 mb-3">
     <div class="col-12">
@@ -346,9 +279,9 @@
                   <th rowspan="2" class="align-middle text-start" style="min-width:130px;">District / Zone</th>
                   <th colspan="3">Laboratoire</th>
                   <th colspan="2">Radiologie</th>
-                  <th colspan="2">Échographie</th>
+                  <th colspan="2">Echographie</th>
                   <th colspan="2">Scanner</th>
-                  <th rowspan="2" class="align-middle">Bloc Opératoire<br><small class="fw-normal">Interventions</small></th>
+                  <th rowspan="2" class="align-middle">Bloc Operatoire<br><small class="fw-normal">Interventions</small></th>
                 </tr>
                 <tr style="background:#2e7d43;color:white;text-align:center;">
                   <th>Malades</th><th>Examens</th><th>Poches Sang</th>
@@ -402,7 +335,7 @@
       <div class="card border-0 shadow-sm">
         <div class="card-header card-header-green">
           <i class="bi bi-bar-chart-steps me-1"></i>
-          Activité des Services d'Aide au Diagnostic
+          Activite des Services d'Aide au Diagnostic
           <span class="fw-normal small">(malades pris en charge par service)</span>
         </div>
         <div class="card-body">
@@ -414,13 +347,13 @@
     </div>
   </div>
 
-  <!-- Graphique en camembert : répartition des examens totaux -->
+  <!-- Donut repartition malades par service + recapitulatif -->
   <div class="row g-3 mb-4">
     <div class="col-md-5">
       <div class="card border-0 shadow-sm h-100">
         <div class="card-header card-header-green">
           <i class="bi bi-pie-chart-fill me-1"></i>
-          Répartition des Malades par Service
+          Repartition des Malades par Service
         </div>
         <div class="card-body d-flex align-items-center justify-content-center">
           <div style="position:relative;height:280px;width:100%;">
@@ -433,7 +366,7 @@
       <div class="card border-0 shadow-sm h-100">
         <div class="card-header card-header-green">
           <i class="bi bi-list-check me-1"></i>
-          Récapitulatif Global — Services d'Aide
+          Recapitulatif Global &mdash; Services d'Aide
         </div>
         <div class="card-body p-0">
           <div class="table-responsive">
@@ -449,7 +382,7 @@
                 <tr>
                   <td><i class="bi bi-droplet-fill text-danger me-1"></i>Laboratoire</td>
                   <td class="text-end fw-bold text-green">{{ stats.service_aide_totaux.labo_malades }}</td>
-                  <td class="text-end text-muted">{{ stats.service_aide_totaux.labo_examens }} examens · {{ stats.service_aide_totaux.labo_sang }} poches sang</td>
+                  <td class="text-end text-muted">{{ stats.service_aide_totaux.labo_examens }} examens &middot; {{ stats.service_aide_totaux.labo_sang }} poches sang</td>
                 </tr>
                 <tr>
                   <td><i class="bi bi-camera-fill text-primary me-1"></i>Radiologie</td>
@@ -457,7 +390,7 @@
                   <td class="text-end text-muted">{{ stats.service_aide_totaux.radio_examens }} examens</td>
                 </tr>
                 <tr>
-                  <td><i class="bi bi-heart-pulse-fill text-warning me-1"></i>Échographie</td>
+                  <td><i class="bi bi-heart-pulse-fill text-warning me-1"></i>Echographie</td>
                   <td class="text-end fw-bold text-green">{{ stats.service_aide_totaux.echo_malades }}</td>
                   <td class="text-end text-muted">{{ stats.service_aide_totaux.echo_films }} films</td>
                 </tr>
@@ -467,7 +400,7 @@
                   <td class="text-end text-muted">{{ stats.service_aide_totaux.scanner_films }} films</td>
                 </tr>
                 <tr>
-                  <td><i class="bi bi-scissors text-secondary me-1"></i>Bloc Opératoire</td>
+                  <td><i class="bi bi-scissors text-secondary me-1"></i>Bloc Operatoire</td>
                   <td class="text-end fw-bold text-green">{{ stats.service_aide_totaux.bloc_interventions }}</td>
                   <td class="text-end text-muted">interventions chirurgicales</td>
                 </tr>
@@ -496,18 +429,30 @@
 </div>
 {% endblock %}
 
-{% block extra_head %}
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-{% endblock %}
-
 {% block scripts %}
+{# ── chartjs-plugin-datalabels doit charger APRES chart.js (en bas de body) ── #}
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
-var periodeLabels = {{ stats.periode_data | map(attribute='periode') | list | tojson }};
-var periodeTotals = {{ stats.periode_data | map(attribute='total') | list | tojson }};
-var districtLabels = {{ stats.district_data | map(attribute='nom') | list | tojson }};
-var districtTotals = {{ stats.district_data | map(attribute='total') | list | tojson }};
+/* ──────────────────────────────────────────────────────────────────────────
+   Enregistrement global du plugin datalabels — DOIT etre avant tout new Chart()
+   ────────────────────────────────────────────────────────────────────────── */
+Chart.register(ChartDataLabels);
 
-// Chart Période
+/* ── Donnees injectees par Jinja ── */
+var periodeLabels    = {{ stats.periode_data | map(attribute='periode') | list | tojson }};
+var periodeTotals    = {{ stats.periode_data | map(attribute='total')   | list | tojson }};
+var districtLabels   = {{ stats.district_data | map(attribute='nom')   | list | tojson }};
+var districtTotals   = {{ stats.district_data | map(attribute='total') | list | tojson }};
+
+/* ── Palette de couleurs ── */
+var palette = [
+  '#1a5c2a','#2e7d43','#4caf72','#81c784','#a5d6a7',
+  '#1976d2','#42a5f5','#f57c00','#ffa726','#c0392b'
+];
+
+/* ══════════════════════════════════════════════════════════════
+   1. Chart — Evolution par Periode (bar, datalabels desactive)
+═══════════════════════════════════════════════════════════════ */
 new Chart(document.getElementById('chartPeriode'), {
   type: 'bar',
   data: {
@@ -518,34 +463,169 @@ new Chart(document.getElementById('chartPeriode'), {
       backgroundColor: 'rgba(46,125,67,0.75)',
       borderColor: '#1a5c2a',
       borderWidth: 1,
-      borderRadius: 4,
+      borderRadius: 4
     }]
   },
   options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: { y: { beginAtZero: true, ticks: { font: { size: 11 } } },
-              x: { ticks: { font: { size: 12, weight: 'bold' } } } }
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      datalabels: { display: false }
+    },
+    scales: {
+      y: { beginAtZero: true, ticks: { font: { size: 11 } } },
+      x: { ticks: { font: { size: 12, weight: 'bold' } } }
+    }
   }
 });
 
-// ── CLASSEMENT — Top 10 Affections ──────────────────────────
-var topAffLabels = {{ stats.top_affections | map(attribute='libelle') | list | tojson }};
-var topAffTotals = {{ stats.top_affections | map(attribute='total') | list | tojson }};
+/* ══════════════════════════════════════════════════════════════
+   2. Chart — Repartition par Zone (doughnut, datalabels desactive)
+═══════════════════════════════════════════════════════════════ */
+new Chart(document.getElementById('chartDistrict'), {
+  type: 'doughnut',
+  data: {
+    labels: districtLabels,
+    datasets: [{
+      data: districtTotals,
+      backgroundColor: palette,
+      borderWidth: 2
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'right', labels: { font: { size: 10 }, boxWidth: 12 } },
+      datalabels: { display: false }
+    }
+  }
+});
+
+/* ══════════════════════════════════════════════════════════════
+   3. Chart — Gravite (pie, datalabels actives)
+═══════════════════════════════════════════════════════════════ */
+var graviteTotal = {{ (stats.total_simples + stats.total_hospit + stats.total_evacues + stats.total_decedes) | int }};
+var graviteData  = [
+  {{ stats.total_simples | int }},
+  {{ stats.total_hospit  | int }},
+  {{ stats.total_evacues | int }},
+  {{ stats.total_decedes | int }}
+];
+
+new Chart(document.getElementById('chartGravite'), {
+  type: 'pie',
+  data: {
+    labels: ['Cas simples', 'Hospitalises', 'Evacues', 'Decedes'],
+    datasets: [{
+      data: graviteData,
+      backgroundColor: ['#5b9bd5', '#ffd700', '#b0c4de', '#c0392b'],
+      borderColor: '#ffffff',
+      borderWidth: 2
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { font: { size: 11 }, boxWidth: 14, padding: 8 }
+      },
+      datalabels: {
+        display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+        formatter: function(value, ctx) {
+          if (!graviteTotal) return '';
+          var pct = (value / graviteTotal * 100).toFixed(1);
+          var lbl = ctx.chart.data.labels[ctx.dataIndex];
+          return lbl + '\n' + pct + '%';
+        },
+        color: function(ctx) { return ctx.dataIndex === 1 ? '#555' : '#fff'; },
+        font: { weight: 'bold', size: 10 },
+        textAlign: 'center'
+      },
+      tooltip: {
+        callbacks: {
+          label: function(ctx) {
+            var val = ctx.parsed;
+            var pct = graviteTotal > 0 ? (val / graviteTotal * 100).toFixed(2) : '0';
+            return ' ' + ctx.label + ' : ' + val.toLocaleString('fr-FR') + ' (' + pct + '%)';
+          }
+        }
+      }
+    }
+  }
+});
+
+/* ══════════════════════════════════════════════════════════════
+   4. Chart — Zone consultants par district (bar, datalabels actives)
+═══════════════════════════════════════════════════════════════ */
+new Chart(document.getElementById('chartZone'), {
+  type: 'bar',
+  data: {
+    labels: districtLabels,
+    datasets: [{
+      label: 'Total consultants',
+      data: districtTotals,
+      backgroundColor: 'rgba(91,155,213,0.82)',
+      borderColor: 'rgba(70,130,180,1)',
+      borderWidth: 1,
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { top: 30 } },
+    plugins: {
+      legend: { display: false },
+      datalabels: {
+        anchor: 'end',
+        align: 'top',
+        offset: 2,
+        formatter: function(value) { return value > 0 ? value.toLocaleString('fr-FR') : ''; },
+        font: { weight: 'bold', size: 11 },
+        color: '#1a3d5c'
+      },
+      tooltip: {
+        callbacks: {
+          label: function(ctx) {
+            return ' ' + ctx.label + ' : ' + ctx.parsed.y.toLocaleString('fr-FR') + ' consultants';
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: { callback: function(v) { return v.toLocaleString('fr-FR'); }, font: { size: 11 } },
+        grid: { color: 'rgba(0,0,0,0.07)' }
+      },
+      x: {
+        ticks: { font: { size: 10 }, maxRotation: 15, minRotation: 0 },
+        grid: { display: false }
+      }
+    }
+  }
+});
+
+/* ══════════════════════════════════════════════════════════════
+   5. Chart — CLASSEMENT Top 10 Affections (bar horizontal, datalabels %)
+═══════════════════════════════════════════════════════════════ */
+var topAffLabels  = {{ stats.top_affections | map(attribute='libelle') | list | tojson }};
+var topAffTotals  = {{ stats.top_affections | map(attribute='total')   | list | tojson }};
 var totalConsultants = {{ stats.total_consultants | int }};
 
-// Pourcentages arrondis à 2 décimales
 var topAffPcts = topAffTotals.map(function(v) {
   return totalConsultants > 0 ? Math.round(v / totalConsultants * 10000) / 100 : 0;
 });
 
-// Étiquettes sur 2 lignes : nom tronqué + nombre de cas
+/* Etiquettes sur 2 lignes : nom tronque + nombre de cas */
 var classLabels = topAffLabels.map(function(l, i) {
-  var words = l.length > 22 ? l.substring(0, 20) + '…' : l;
-  return [words, topAffTotals[i].toLocaleString('fr-FR')];
+  var shortName = l.length > 22 ? l.substring(0, 20) + '...' : l;
+  return [shortName, topAffTotals[i].toLocaleString('fr-FR')];
 });
-
-Chart.register(ChartDataLabels);
 
 new Chart(document.getElementById('chartClassement'), {
   type: 'bar',
@@ -557,7 +637,7 @@ new Chart(document.getElementById('chartClassement'), {
       backgroundColor: 'rgba(91,155,213,0.82)',
       borderColor: 'rgba(70,130,180,1)',
       borderWidth: 1,
-      borderRadius: 4,
+      borderRadius: 4
     }]
   },
   options: {
@@ -578,7 +658,7 @@ new Chart(document.getElementById('chartClassement'), {
         callbacks: {
           label: function(ctx) {
             var i = ctx.dataIndex;
-            return topAffPcts[i] + '% — ' + topAffTotals[i].toLocaleString('fr-FR') + ' cas';
+            return topAffPcts[i] + '% - ' + topAffTotals[i].toLocaleString('fr-FR') + ' cas';
           }
         }
       }
@@ -586,10 +666,7 @@ new Chart(document.getElementById('chartClassement'), {
     scales: {
       y: {
         beginAtZero: true,
-        ticks: {
-          callback: function(v) { return v + '%'; },
-          font: { size: 11 }
-        },
+        ticks: { callback: function(v) { return v + '%'; }, font: { size: 11 } },
         grid: { color: 'rgba(0,0,0,0.07)' }
       },
       x: {
@@ -600,143 +677,9 @@ new Chart(document.getElementById('chartClassement'), {
   }
 });
 
-// Chart District (doughnut)
-var colors = ['#1a5c2a','#2e7d43','#4caf72','#81c784','#a5d6a7',
-              '#1976d2','#42a5f5','#f57c00','#ffa726','#c0392b'];
-new Chart(document.getElementById('chartDistrict'), {
-  type: 'doughnut',
-  data: {
-    labels: districtLabels,
-    datasets: [{
-      data: districtTotals,
-      backgroundColor: colors,
-      borderWidth: 2
-    }]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: {
-      legend: { position: 'right', labels: { font: { size: 10 }, boxWidth: 12 } },
-      datalabels: { display: false }
-    }
-  }
-});
-
-// ── Gravité (répartition par type de cas) ─────────────────────
-var graviteTotal = {{ (stats.total_simples + stats.total_hospit + stats.total_evacues + stats.total_decedes) | int }};
-var graviteData  = [
-  {{ stats.total_simples | int }},
-  {{ stats.total_hospit  | int }},
-  {{ stats.total_evacues | int }},
-  {{ stats.total_decedes | int }}
-];
-
-new Chart(document.getElementById('chartGravite'), {
-  type: 'pie',
-  data: {
-    labels: ['Cas simples', 'Hospitalisés', 'Évacués', 'Décédés'],
-    datasets: [{
-      data: graviteData,
-      backgroundColor: ['#5b9bd5', '#ffd700', '#b0c4de', '#c0392b'],
-      borderColor: '#ffffff',
-      borderWidth: 2
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: { font: { size: 11 }, boxWidth: 14, padding: 8 }
-      },
-      datalabels: {
-        display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
-        formatter: function(value, ctx) {
-          if (!graviteTotal) return '';
-          var pct = (value / graviteTotal * 100).toFixed(2);
-          var label = ctx.chart.data.labels[ctx.dataIndex];
-          return label + '\n' + pct + '%';
-        },
-        color: function(ctx) {
-          return ctx.dataIndex === 1 ? '#555' : '#fff';
-        },
-        font: { weight: 'bold', size: 10 },
-        textAlign: 'center'
-      },
-      tooltip: {
-        callbacks: {
-          label: function(ctx) {
-            var val = ctx.parsed;
-            var pct = graviteTotal > 0 ? (val / graviteTotal * 100).toFixed(2) : '0';
-            return ' ' + ctx.label + ' : ' + val.toLocaleString('fr-FR') + ' (' + pct + '%)';
-          }
-        }
-      }
-    }
-  }
-});
-
-// ── Zone — Consultants par district (bar chart) ───────────────
-new Chart(document.getElementById('chartZone'), {
-  type: 'bar',
-  data: {
-    labels: districtLabels,
-    datasets: [{
-      label: 'Total consultants',
-      data: districtTotals,
-      backgroundColor: 'rgba(91,155,213,0.82)',
-      borderColor: 'rgba(70,130,180,1)',
-      borderWidth: 1,
-      borderRadius: 4,
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    layout: { padding: { top: 30 } },
-    plugins: {
-      legend: { display: false },
-      datalabels: {
-        anchor: 'end',
-        align: 'top',
-        offset: 2,
-        formatter: function(value) {
-          return value > 0 ? value.toLocaleString('fr-FR') : '';
-        },
-        font: { weight: 'bold', size: 11 },
-        color: '#1a3d5c'
-      },
-      tooltip: {
-        callbacks: {
-          label: function(ctx) {
-            return ' ' + ctx.label + ' : ' + ctx.parsed.y.toLocaleString('fr-FR') + ' consultants';
-          }
-        }
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          callback: function(v) { return v.toLocaleString('fr-FR'); },
-          font: { size: 11 }
-        },
-        grid: { color: 'rgba(0,0,0,0.07)' }
-      },
-      x: {
-        ticks: {
-          font: { size: 10 },
-          maxRotation: 15,
-          minRotation: 0
-        },
-        grid: { display: false }
-      }
-    }
-  }
-});
-
-// ── Services d'Aide au Diagnostic — Charts ──────────────────
+/* ══════════════════════════════════════════════════════════════
+   6. Charts — Services d'Aide au Diagnostic
+═══════════════════════════════════════════════════════════════ */
 (function() {
   var svcAideCanvas = document.getElementById('chartServiceAide');
   var svcPieCanvas  = document.getElementById('chartServiceAidePie');
@@ -744,10 +687,9 @@ new Chart(document.getElementById('chartZone'), {
 
   var svcData   = {{ (stats.service_aide_data or []) | tojson }};
   var svcTotaux = {{ (stats.service_aide_totaux or {}) | tojson }};
-
   var svcLabels = svcData.map(function(r) { return r.district; });
 
-  // ── Grouped bar : malades par service et par district ──────
+  /* 6a. Grouped bar : malades par service et par district */
   new Chart(svcAideCanvas, {
     type: 'bar',
     data: {
@@ -813,18 +755,18 @@ new Chart(document.getElementById('chartZone'), {
     }
   });
 
-  // ── Donut : répartition globale des malades par service ────
+  /* 6b. Donut : repartition globale des malades par service */
   if (!svcPieCanvas) return;
   var svcPieLabels = ['Laboratoire', 'Radiologie', 'Echographie', 'Scanner', 'Bloc Op.'];
   var svcPieData   = [
-    svcTotaux.labo_malades,
-    svcTotaux.radio_malades,
-    svcTotaux.echo_malades,
-    svcTotaux.scanner_malades,
-    svcTotaux.bloc_interventions
+    svcTotaux.labo_malades   || 0,
+    svcTotaux.radio_malades  || 0,
+    svcTotaux.echo_malades   || 0,
+    svcTotaux.scanner_malades|| 0,
+    svcTotaux.bloc_interventions || 0
   ];
   var svcPieColors = ['#c0392b','#1976d2','#f57c00','#00acc1','#7b1fa2'];
-  var svcPieTotal  = svcPieData.reduce(function(a,b){ return a+b; }, 0);
+  var svcPieTotal  = svcPieData.reduce(function(a, b) { return a + b; }, 0);
 
   new Chart(svcPieCanvas, {
     type: 'doughnut',
