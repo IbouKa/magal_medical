@@ -143,9 +143,24 @@ def saisie():
 
     # Charger les données des services d'aide existants
     services_diag_map = {}
-    if fiche and eps.type_eps == 'hopital':
-        for sd in ServiceDiagnostic.query.filter_by(fiche_id=fiche.id).all():
-            services_diag_map[sd.service] = sd.valeur
+    if eps.type_eps == 'hopital':
+        sd = ServiceDiagnostic.query.filter_by(
+            eps_id=eps.id, edition_id=edition.id, periode=periode
+        ).first()
+        if sd:
+            services_diag_map = {
+                'labo_malades':   sd.labo_nb_malades    or 0,
+                'labo_examens':   sd.labo_nb_examens    or 0,
+                'labo_poches':    sd.labo_poches_sang   or 0,
+                'radio_malades':  sd.radio_nb_malades   or 0,
+                'radio_films':    sd.radio_nb_films     or 0,
+                'radio_examens':  sd.radio_nb_examens   or 0,
+                'echo_malades':   sd.echo_nb_malades    or 0,
+                'echo_films':     sd.echo_nb_films      or 0,
+                'scanner_malades': sd.scanner_nb_malades or 0,
+                'scanner_films':  sd.scanner_nb_films   or 0,
+                'bloc':           sd.bloc_nb_interventions or 0,
+            }
 
     if request.method == 'POST':
         periode_post = request.form.get('periode', periode)
@@ -192,16 +207,27 @@ def saisie():
 
         # Sauvegarder les services d'aide (hôpitaux uniquement)
         if eps.type_eps == 'hopital':
-            for svc in SERVICES_AIDE:
-                for key, _label in svc['champs']:
-                    valeur = int(request.form.get(f'svc_{key}', 0) or 0)
-                    sd = ServiceDiagnostic.query.filter_by(
-                        fiche_id=fiche.id, service=key
-                    ).first()
-                    if not sd:
-                        sd = ServiceDiagnostic(fiche_id=fiche.id, service=key)
-                        db.session.add(sd)
-                    sd.valeur = max(0, valeur)
+            sd = ServiceDiagnostic.query.filter_by(
+                eps_id=eps.id, edition_id=edition.id, periode=periode_post
+            ).first()
+            if not sd:
+                sd = ServiceDiagnostic(
+                    eps_id=eps.id,
+                    edition_id=edition.id,
+                    periode=periode_post
+                )
+                db.session.add(sd)
+            sd.labo_nb_malades       = max(0, int(request.form.get('svc_labo_malades',   0) or 0))
+            sd.labo_nb_examens       = max(0, int(request.form.get('svc_labo_examens',   0) or 0))
+            sd.labo_poches_sang      = max(0, int(request.form.get('svc_labo_poches',    0) or 0))
+            sd.radio_nb_malades      = max(0, int(request.form.get('svc_radio_malades',  0) or 0))
+            sd.radio_nb_films        = max(0, int(request.form.get('svc_radio_films',    0) or 0))
+            sd.radio_nb_examens      = max(0, int(request.form.get('svc_radio_examens',  0) or 0))
+            sd.echo_nb_malades       = max(0, int(request.form.get('svc_echo_malades',   0) or 0))
+            sd.echo_nb_films         = max(0, int(request.form.get('svc_echo_films',     0) or 0))
+            sd.scanner_nb_malades    = max(0, int(request.form.get('svc_scanner_malades',0) or 0))
+            sd.scanner_nb_films      = max(0, int(request.form.get('svc_scanner_films',  0) or 0))
+            sd.bloc_nb_interventions = max(0, int(request.form.get('svc_bloc',           0) or 0))
 
         db.session.commit()
         flash(f'Fiche {periode_post} enregistree avec succes.', 'success')
