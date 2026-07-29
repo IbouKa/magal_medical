@@ -173,6 +173,79 @@ def stats():
 
     districts = District.query.filter_by(actif=True).order_by(District.ordre).all()
 
+    # ── Services d'aide au diagnostic ────────────────────────────────────────
+    svc_query = db.session.query(
+        District.nom.label('district'),
+        func.sum(ServiceDiagnostic.labo_nb_malades).label('labo_malades'),
+        func.sum(ServiceDiagnostic.labo_nb_examens).label('labo_examens'),
+        func.sum(ServiceDiagnostic.labo_poches_sang).label('labo_sang'),
+        func.sum(ServiceDiagnostic.radio_nb_malades).label('radio_malades'),
+        func.sum(ServiceDiagnostic.radio_nb_examens).label('radio_examens'),
+        func.sum(ServiceDiagnostic.echo_nb_malades).label('echo_malades'),
+        func.sum(ServiceDiagnostic.echo_nb_films).label('echo_films'),
+        func.sum(ServiceDiagnostic.scanner_nb_malades).label('scanner_malades'),
+        func.sum(ServiceDiagnostic.scanner_nb_films).label('scanner_films'),
+        func.sum(ServiceDiagnostic.bloc_nb_interventions).label('bloc_interventions'),
+    ).join(EPS, ServiceDiagnostic.eps_id == EPS.id
+    ).join(District, EPS.district_id == District.id
+    ).filter(ServiceDiagnostic.edition_id == edition.id)
+
+    if selected_periode:
+        svc_query = svc_query.filter(ServiceDiagnostic.periode == selected_periode)
+    if selected_district:
+        svc_query = svc_query.filter(EPS.district_id == int(selected_district))
+
+    svc_rows = svc_query.group_by(District.nom).order_by(District.nom).all()
+
+    service_aide_data = []
+    for row in svc_rows:
+        service_aide_data.append({
+            'district': row.district,
+            'labo_malades': int(row.labo_malades or 0),
+            'labo_examens': int(row.labo_examens or 0),
+            'labo_sang': int(row.labo_sang or 0),
+            'radio_malades': int(row.radio_malades or 0),
+            'radio_examens': int(row.radio_examens or 0),
+            'echo_malades': int(row.echo_malades or 0),
+            'echo_films': int(row.echo_films or 0),
+            'scanner_malades': int(row.scanner_malades or 0),
+            'scanner_films': int(row.scanner_films or 0),
+            'bloc_interventions': int(row.bloc_interventions or 0),
+        })
+
+    # Totaux globaux service d'aide
+    svc_totals_q = db.session.query(
+        func.sum(ServiceDiagnostic.labo_nb_malades),
+        func.sum(ServiceDiagnostic.labo_nb_examens),
+        func.sum(ServiceDiagnostic.labo_poches_sang),
+        func.sum(ServiceDiagnostic.radio_nb_malades),
+        func.sum(ServiceDiagnostic.radio_nb_examens),
+        func.sum(ServiceDiagnostic.echo_nb_malades),
+        func.sum(ServiceDiagnostic.echo_nb_films),
+        func.sum(ServiceDiagnostic.scanner_nb_malades),
+        func.sum(ServiceDiagnostic.scanner_nb_films),
+        func.sum(ServiceDiagnostic.bloc_nb_interventions),
+    ).filter(ServiceDiagnostic.edition_id == edition.id)
+    if selected_periode:
+        svc_totals_q = svc_totals_q.filter(ServiceDiagnostic.periode == selected_periode)
+    if selected_district:
+        svc_totals_q = svc_totals_q.join(EPS, ServiceDiagnostic.eps_id == EPS.id).filter(
+            EPS.district_id == int(selected_district)
+        )
+    svc_t = svc_totals_q.first()
+    service_aide_totaux = {
+        'labo_malades':      int(svc_t[0] or 0),
+        'labo_examens':      int(svc_t[1] or 0),
+        'labo_sang':         int(svc_t[2] or 0),
+        'radio_malades':     int(svc_t[3] or 0),
+        'radio_examens':     int(svc_t[4] or 0),
+        'echo_malades':      int(svc_t[5] or 0),
+        'echo_films':        int(svc_t[6] or 0),
+        'scanner_malades':   int(svc_t[7] or 0),
+        'scanner_films':     int(svc_t[8] or 0),
+        'bloc_interventions':int(svc_t[9] or 0),
+    }
+
     stats_data = {
         'total_consultants': total_consultants,
         'total_simples': total_simples,
@@ -188,6 +261,8 @@ def stats():
         'completude_pct': completude_pct,
         'morbidite_data': morbidite_raw,
         'grand_total_morb': grand_total_morb,
+        'service_aide_data': service_aide_data,
+        'service_aide_totaux': service_aide_totaux,
     }
 
     return render_template('public/stats.html',

@@ -324,6 +324,174 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       SERVICE D'AIDE AU DIAGNOSTIC
+  ════════════════════════════════════════════════════════════════════════ -->
+  {% if stats.service_aide_data %}
+  <div class="row g-3 mt-1 mb-3">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header card-header-green d-flex justify-content-between align-items-center">
+          <span>
+            <i class="bi bi-flask me-1"></i>
+            Services d'Aide au Diagnostic
+          </span>
+          <span class="small fw-normal">par District / Zone sanitaire</span>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm mb-0" style="font-size:.82rem;">
+              <thead style="background:#1a6b3c;color:white;text-align:center;">
+                <tr>
+                  <th rowspan="2" class="align-middle text-start" style="min-width:130px;">District / Zone</th>
+                  <th colspan="3">Laboratoire</th>
+                  <th colspan="2">Radiologie</th>
+                  <th colspan="2">Échographie</th>
+                  <th colspan="2">Scanner</th>
+                  <th rowspan="2" class="align-middle">Bloc Opératoire<br><small class="fw-normal">Interventions</small></th>
+                </tr>
+                <tr style="background:#2e7d43;color:white;text-align:center;">
+                  <th>Malades</th><th>Examens</th><th>Poches Sang</th>
+                  <th>Malades</th><th>Examens</th>
+                  <th>Malades</th><th>Films</th>
+                  <th>Malades</th><th>Films</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in stats.service_aide_data %}
+                <tr style="{% if loop.index % 2 == 0 %}background:#f9f9f9;{% endif %}">
+                  <td class="fw-semibold">{{ row.district }}</td>
+                  <td class="text-center">{{ row.labo_malades or '-' }}</td>
+                  <td class="text-center">{{ row.labo_examens or '-' }}</td>
+                  <td class="text-center">{{ row.labo_sang or '-' }}</td>
+                  <td class="text-center">{{ row.radio_malades or '-' }}</td>
+                  <td class="text-center">{{ row.radio_examens or '-' }}</td>
+                  <td class="text-center">{{ row.echo_malades or '-' }}</td>
+                  <td class="text-center">{{ row.echo_films or '-' }}</td>
+                  <td class="text-center">{{ row.scanner_malades or '-' }}</td>
+                  <td class="text-center">{{ row.scanner_films or '-' }}</td>
+                  <td class="text-center">{{ row.bloc_interventions or '-' }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+              <tfoot>
+                <tr style="background:#1a6b3c;color:white;font-weight:bold;text-align:center;">
+                  <td class="text-start">TOTAL</td>
+                  <td>{{ stats.service_aide_totaux.labo_malades }}</td>
+                  <td>{{ stats.service_aide_totaux.labo_examens }}</td>
+                  <td>{{ stats.service_aide_totaux.labo_sang }}</td>
+                  <td>{{ stats.service_aide_totaux.radio_malades }}</td>
+                  <td>{{ stats.service_aide_totaux.radio_examens }}</td>
+                  <td>{{ stats.service_aide_totaux.echo_malades }}</td>
+                  <td>{{ stats.service_aide_totaux.echo_films }}</td>
+                  <td>{{ stats.service_aide_totaux.scanner_malades }}</td>
+                  <td>{{ stats.service_aide_totaux.scanner_films }}</td>
+                  <td>{{ stats.service_aide_totaux.bloc_interventions }}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graphique service d'aide : malades par service (grouped bar) -->
+  <div class="row g-3 mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header card-header-green">
+          <i class="bi bi-bar-chart-steps me-1"></i>
+          Activité des Services d'Aide au Diagnostic
+          <span class="fw-normal small">(malades pris en charge par service)</span>
+        </div>
+        <div class="card-body">
+          <div style="position:relative;height:340px;">
+            <canvas id="chartServiceAide"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graphique en camembert : répartition des examens totaux -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-5">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header card-header-green">
+          <i class="bi bi-pie-chart-fill me-1"></i>
+          Répartition des Malades par Service
+        </div>
+        <div class="card-body d-flex align-items-center justify-content-center">
+          <div style="position:relative;height:280px;width:100%;">
+            <canvas id="chartServiceAidePie"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-7">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header card-header-green">
+          <i class="bi bi-list-check me-1"></i>
+          Récapitulatif Global — Services d'Aide
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-magal mb-0">
+              <thead>
+                <tr>
+                  <th>Service</th>
+                  <th class="text-end">Malades</th>
+                  <th class="text-end">Examens / Films</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><i class="bi bi-droplet-fill text-danger me-1"></i>Laboratoire</td>
+                  <td class="text-end fw-bold text-green">{{ stats.service_aide_totaux.labo_malades }}</td>
+                  <td class="text-end text-muted">{{ stats.service_aide_totaux.labo_examens }} examens · {{ stats.service_aide_totaux.labo_sang }} poches sang</td>
+                </tr>
+                <tr>
+                  <td><i class="bi bi-camera-fill text-primary me-1"></i>Radiologie</td>
+                  <td class="text-end fw-bold text-green">{{ stats.service_aide_totaux.radio_malades }}</td>
+                  <td class="text-end text-muted">{{ stats.service_aide_totaux.radio_examens }} examens</td>
+                </tr>
+                <tr>
+                  <td><i class="bi bi-heart-pulse-fill text-warning me-1"></i>Échographie</td>
+                  <td class="text-end fw-bold text-green">{{ stats.service_aide_totaux.echo_malades }}</td>
+                  <td class="text-end text-muted">{{ stats.service_aide_totaux.echo_films }} films</td>
+                </tr>
+                <tr>
+                  <td><i class="bi bi-cpu-fill text-info me-1"></i>Scanner</td>
+                  <td class="text-end fw-bold text-green">{{ stats.service_aide_totaux.scanner_malades }}</td>
+                  <td class="text-end text-muted">{{ stats.service_aide_totaux.scanner_films }} films</td>
+                </tr>
+                <tr>
+                  <td><i class="bi bi-scissors text-secondary me-1"></i>Bloc Opératoire</td>
+                  <td class="text-end fw-bold text-green">{{ stats.service_aide_totaux.bloc_interventions }}</td>
+                  <td class="text-end text-muted">interventions chirurgicales</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr class="table-success">
+                  <th>Total malades (diag.)</th>
+                  <th class="text-end">
+                    {{ stats.service_aide_totaux.labo_malades
+                       + stats.service_aide_totaux.radio_malades
+                       + stats.service_aide_totaux.echo_malades
+                       + stats.service_aide_totaux.scanner_malades }}
+                  </th>
+                  <th></th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   {% endif %}
 </div>
 {% endblock %}
@@ -336,8 +504,8 @@
 <script>
 var periodeLabels = {{ stats.periode_data | map(attribute='periode') | list | tojson }};
 var periodeTotals = {{ stats.periode_data | map(attribute='total') | list | tojson }};
-var districtLabels = {{ stats.district_data | map(attribute=0) | list | tojson }};
-var districtTotals = {{ stats.district_data | map(attribute=1) | list | tojson }};
+var districtLabels = {{ stats.district_data | map(attribute='nom') | list | tojson }};
+var districtTotals = {{ stats.district_data | map(attribute='total') | list | tojson }};
 
 // Chart Période
 new Chart(document.getElementById('chartPeriode'), {
@@ -362,8 +530,8 @@ new Chart(document.getElementById('chartPeriode'), {
 });
 
 // ── CLASSEMENT — Top 10 Affections ──────────────────────────
-var topAffLabels = {{ stats.top_affections | map(attribute=0) | list | tojson }};
-var topAffTotals = {{ stats.top_affections | map(attribute=1) | list | tojson }};
+var topAffLabels = {{ stats.top_affections | map(attribute='libelle') | list | tojson }};
+var topAffTotals = {{ stats.top_affections | map(attribute='total') | list | tojson }};
 var totalConsultants = {{ stats.total_consultants | int }};
 
 // Pourcentages arrondis à 2 décimales
@@ -567,5 +735,134 @@ new Chart(document.getElementById('chartZone'), {
     }
   }
 });
+
+// ── Services d'Aide au Diagnostic — Charts ──────────────────
+(function() {
+  var svcAideCanvas = document.getElementById('chartServiceAide');
+  var svcPieCanvas  = document.getElementById('chartServiceAidePie');
+  if (!svcAideCanvas) return;
+
+  var svcData   = {{ (stats.service_aide_data or []) | tojson }};
+  var svcTotaux = {{ (stats.service_aide_totaux or {}) | tojson }};
+
+  var svcLabels = svcData.map(function(r) { return r.district; });
+
+  // ── Grouped bar : malades par service et par district ──────
+  new Chart(svcAideCanvas, {
+    type: 'bar',
+    data: {
+      labels: svcLabels,
+      datasets: [
+        {
+          label: 'Laboratoire',
+          data: svcData.map(function(r) { return r.labo_malades; }),
+          backgroundColor: 'rgba(192,57,43,0.80)',
+          borderColor: '#c0392b', borderWidth: 1, borderRadius: 3
+        },
+        {
+          label: 'Radiologie',
+          data: svcData.map(function(r) { return r.radio_malades; }),
+          backgroundColor: 'rgba(25,118,210,0.80)',
+          borderColor: '#1976d2', borderWidth: 1, borderRadius: 3
+        },
+        {
+          label: 'Echographie',
+          data: svcData.map(function(r) { return r.echo_malades; }),
+          backgroundColor: 'rgba(245,124,0,0.80)',
+          borderColor: '#f57c00', borderWidth: 1, borderRadius: 3
+        },
+        {
+          label: 'Scanner',
+          data: svcData.map(function(r) { return r.scanner_malades; }),
+          backgroundColor: 'rgba(0,172,193,0.80)',
+          borderColor: '#00acc1', borderWidth: 1, borderRadius: 3
+        },
+        {
+          label: 'Bloc Op.',
+          data: svcData.map(function(r) { return r.bloc_interventions; }),
+          backgroundColor: 'rgba(123,31,162,0.80)',
+          borderColor: '#7b1fa2', borderWidth: 1, borderRadius: 3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 14 } },
+        datalabels: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              return ' ' + ctx.dataset.label + ' : ' + ctx.parsed.y.toLocaleString('fr-FR');
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { font: { size: 10 }, maxRotation: 15 },
+          grid: { display: false }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { callback: function(v) { return v.toLocaleString('fr-FR'); }, font: { size: 11 } },
+          grid: { color: 'rgba(0,0,0,0.06)' }
+        }
+      }
+    }
+  });
+
+  // ── Donut : répartition globale des malades par service ────
+  if (!svcPieCanvas) return;
+  var svcPieLabels = ['Laboratoire', 'Radiologie', 'Echographie', 'Scanner', 'Bloc Op.'];
+  var svcPieData   = [
+    svcTotaux.labo_malades,
+    svcTotaux.radio_malades,
+    svcTotaux.echo_malades,
+    svcTotaux.scanner_malades,
+    svcTotaux.bloc_interventions
+  ];
+  var svcPieColors = ['#c0392b','#1976d2','#f57c00','#00acc1','#7b1fa2'];
+  var svcPieTotal  = svcPieData.reduce(function(a,b){ return a+b; }, 0);
+
+  new Chart(svcPieCanvas, {
+    type: 'doughnut',
+    data: {
+      labels: svcPieLabels,
+      datasets: [{
+        data: svcPieData,
+        backgroundColor: svcPieColors,
+        borderColor: '#ffffff',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 14, padding: 8 } },
+        datalabels: {
+          display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+          formatter: function(value) {
+            if (!svcPieTotal) return '';
+            return (value / svcPieTotal * 100).toFixed(1) + '%';
+          },
+          color: '#fff',
+          font: { weight: 'bold', size: 11 }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              var v = ctx.parsed;
+              var pct = svcPieTotal > 0 ? (v / svcPieTotal * 100).toFixed(1) : '0';
+              return ' ' + ctx.label + ' : ' + v.toLocaleString('fr-FR') + ' (' + pct + '%)';
+            }
+          }
+        }
+      }
+    }
+  });
+})();
 </script>
 {% endblock %}
