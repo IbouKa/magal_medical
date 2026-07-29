@@ -158,6 +158,23 @@
     </div>
   </div>
 
+  <!-- CLASSEMENT — Top 10 Affections bar chart -->
+  <div class="row g-3 mb-3">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header card-header-green">
+          <i class="bi bi-bar-chart-fill"></i>
+          CLASSEMENT — Top 10 Affections <span class="fw-normal small">(% des consultants)</span>
+        </div>
+        <div class="card-body">
+          <div style="position:relative; height:360px;">
+            <canvas id="chartClassement"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="row g-3">
     <!-- Top 10 Affections -->
     <div class="col-md-6">
@@ -226,6 +243,10 @@
 </div>
 {% endblock %}
 
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+{% endblock %}
+
 {% block scripts %}
 <script>
 var periodeLabels = {{ stats.periode_data | map(attribute='periode') | list | tojson }};
@@ -252,6 +273,77 @@ new Chart(document.getElementById('chartPeriode'), {
     plugins: { legend: { display: false } },
     scales: { y: { beginAtZero: true, ticks: { font: { size: 11 } } },
               x: { ticks: { font: { size: 12, weight: 'bold' } } } }
+  }
+});
+
+// ── CLASSEMENT — Top 10 Affections ──────────────────────────
+var topAffLabels = {{ stats.top_affections | map(attribute=0) | list | tojson }};
+var topAffTotals = {{ stats.top_affections | map(attribute=1) | list | tojson }};
+var totalConsultants = {{ stats.total_consultants | int }};
+
+// Pourcentages arrondis à 2 décimales
+var topAffPcts = topAffTotals.map(function(v) {
+  return totalConsultants > 0 ? Math.round(v / totalConsultants * 10000) / 100 : 0;
+});
+
+// Étiquettes sur 2 lignes : nom tronqué + nombre de cas
+var classLabels = topAffLabels.map(function(l, i) {
+  var words = l.length > 22 ? l.substring(0, 20) + '…' : l;
+  return [words, topAffTotals[i].toLocaleString('fr-FR')];
+});
+
+Chart.register(ChartDataLabels);
+
+new Chart(document.getElementById('chartClassement'), {
+  type: 'bar',
+  data: {
+    labels: classLabels,
+    datasets: [{
+      label: '% des consultants',
+      data: topAffPcts,
+      backgroundColor: 'rgba(91,155,213,0.82)',
+      borderColor: 'rgba(70,130,180,1)',
+      borderWidth: 1,
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { top: 28 } },
+    plugins: {
+      legend: { display: false },
+      datalabels: {
+        anchor: 'end',
+        align: 'top',
+        offset: 2,
+        formatter: function(value) { return value.toFixed(2) + '%'; },
+        font: { weight: 'bold', size: 11 },
+        color: '#1a3d5c'
+      },
+      tooltip: {
+        callbacks: {
+          label: function(ctx) {
+            var i = ctx.dataIndex;
+            return topAffPcts[i] + '% — ' + topAffTotals[i].toLocaleString('fr-FR') + ' cas';
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: function(v) { return v + '%'; },
+          font: { size: 11 }
+        },
+        grid: { color: 'rgba(0,0,0,0.07)' }
+      },
+      x: {
+        ticks: { font: { size: 10 }, maxRotation: 0, minRotation: 0 },
+        grid: { display: false }
+      }
+    }
   }
 });
 

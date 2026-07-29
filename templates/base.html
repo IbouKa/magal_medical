@@ -50,6 +50,12 @@
               <i class="bi bi-speedometer2"></i> Tableau de bord
             </a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'public.stats' %}active{% endif %}"
+               href="{{ url_for('public.stats') }}">
+              <i class="bi bi-bar-chart-line-fill"></i> Statistiques
+            </a>
+          </li>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
               <i class="bi bi-gear-fill"></i> Administration
