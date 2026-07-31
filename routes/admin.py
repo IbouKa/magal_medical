@@ -752,6 +752,12 @@ AFFECTION_CORRECTIONS = {
     "Affections de l'œil et annexes":         "Affections de l'oeil et annexes",
     'Maladies  chroniques (diabète,…)':       'Maladies chroniques (diabète, drépanocytose...)',
     'Rougeole':                               'Cas suspect de Rougeole',
+    'Méningite':                                 'Méningite (cas suspect)',
+    '(COVID 19) Cas Suspect':                        '(COVID-19) Cas Suspects',
+    '(COVID 19) Cas confirmé':                      '(COVID-19) Cas confirmés',
+    'Cas confirmé': 'Cas de Paludisme confirmé (TDR+)',
+    'Choléra': 'Cas suspects de Choléra',
+    'Dengue': 'Cas suspects de Dengue',
 }
 
 def _build_editions_stats():
@@ -891,6 +897,191 @@ def toutes_editions():
     data['import_logs'] = import_logs
     data['last_import_id'] = last_import_id
     return render_template('admin/toutes_editions.html', **data)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# AFFECTIONS — CRUD
+# ─────────────────────────────────────────────────────────────────────────────
+
+CATEGORIES_AFFECTION = [
+    ('autres',         'Autres'),
+    ('paludisme',      'Paludisme'),
+    ('mpe',            'MPE — Maladie à Potentiel Épidémique'),
+    ('traumatologie',  'Traumatologie'),
+    ('dermatologie',   'Dermatologie'),
+    ('ophtalmologie',  'Ophtalmologie / ORL'),
+    ('gynecologie',    'Gynécologie / Obstétrique'),
+    ('chronique',      'Maladies chroniques'),
+    ('gastroentero',   'Gastroentérologie'),
+    ('respiratoire',   'Affections respiratoires'),
+    ('neurologie',     'Neurologie'),
+]
+
+
+@admin_bp.route('/affections')
+@login_required
+@admin_required
+def liste_affections():
+    q = request.args.get('q', '').strip()
+    cat = request.args.get('categorie', '')
+    mpe_filter = request.args.get('mpe', '')
+
+    query = Affection.query
+    if q:
+        query = query.filter(Affection.libelle.ilike(f'%{q}%'))
+    if cat:
+        query = query.filter(Affection.categorie == cat)
+    if mpe_filter == '1':
+        query = query.filter(Affection.is_mpe == True)
+    elif mpe_filter == '0':
+        query = query.filter(Affection.is_mpe == False)
+
+    affections = query.order_by(Affection.numero).all()
+    nb_total = Affection.query.count()
+    nb_actifs = Affection.query.filter_by(actif=True).count()
+    nb_mpe = Affection.query.filter_by(is_mpe=True).count()
+
+    return render_template(
+        'admin/affections.html',
+        affections=affections,
+        categories=CATEGORIES_AFFECTION,
+        q=q,
+        selected_categorie=cat,
+        selected_mpe=mpe_filter,
+        nb_total=nb_total,
+        nb_actifs=nb_actifs,
+        nb_mpe=nb_mpe,
+    )
+
+
+@admin_bp.route('/affections/nouvelle', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def nouvelle_affection():
+    if request.method == 'POST':
+        numero_str = request.form.get('numero', '').strip()
+        libelle = request.form.get('libelle', '').strip()
+        categorie = request.form.get('categorie', 'autres')
+        is_mpe = bool(request.form.get('is_mpe'))
+        actif = bool(request.form.get('actif'))
+
+        if not numero_str or not libelle:
+            flash('Le numéro et le libellé sont obligatoires.', 'danger')
+        elif not numero_str.lstrip('-').isdigit():
+            flash('Le numéro doit être un entier positif.', 'danger')
+        else:
+            num = int(numero_str)
+            if Affection.query.filter_by(numero=num).first():
+                flash(f'Une affection avec le numéro {num} existe déjà.', 'warning')
+            elif Affection.query.filter(func.lower(Affection.libelle) == libelle.lower()).first():
+                flash('Une affection avec ce libellé existe déjà.', 'warning')
+            else:
+                aff = Affection(
+                    numero=num,
+                    libelle=libelle,
+                    categorie=categorie,
+                    is_mpe=is_mpe,
+                    actif=actif,
+                )
+                db.session.add(aff)
+                db.session.commit()
+                flash(f'Affection « {libelle} » créée avec succès.', 'success')
+                return redirect(url_for('admin.liste_affections'))
+
+    last = Affection.query.order_by(Affection.numero.desc()).first()
+    next_num = (last.numero + 1) if last else 1
+
+    return render_template(
+        'admin/affection_form.html',
+        affection=None,
+        categories=CATEGORIES_AFFECTION,
+        next_num=next_num,
+        action='Créer',
+    )
+
+
+@admin_bp.route('/affections/<int:aff_id>/modifier', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def modifier_affection(aff_id):
+    aff = db.session.get(Affection, aff_id)
+    if not aff:
+        flash('Affection introuvable.', 'danger')
+        return redirect(url_for('admin.liste_affections'))
+
+    if request.method == 'POST':
+        numero_str = request.form.get('numero', '').strip()
+        libelle = request.form.get('libelle', '').strip()
+        categorie = request.form.get('categorie', 'autres')
+        is_mpe = bool(request.form.get('is_mpe'))
+        actif = bool(request.form.get('actif'))
+
+        if not numero_str or not libelle:
+            flash('Le numéro et le libellé sont obligatoires.', 'danger')
+        elif not numero_str.lstrip('-').isdigit():
+            flash('Le numéro doit être un entier positif.', 'danger')
+        else:
+            num = int(numero_str)
+            conflict = Affection.query.filter(
+                Affection.numero == num, Affection.id != aff_id
+            ).first()
+            if conflict:
+                flash(f'Le numéro {num} est déjà utilisé par « {conflict.libelle} ».', 'warning')
+            else:
+                aff.numero = num
+                aff.libelle = libelle
+                aff.categorie = categorie
+                aff.is_mpe = is_mpe
+                aff.actif = actif
+                db.session.commit()
+                flash(f'Affection « {libelle} » modifiée avec succès.', 'success')
+                return redirect(url_for('admin.liste_affections'))
+
+    return render_template(
+        'admin/affection_form.html',
+        affection=aff,
+        categories=CATEGORIES_AFFECTION,
+        next_num=None,
+        action='Modifier',
+    )
+
+
+@admin_bp.route('/affections/<int:aff_id>/toggle', methods=['POST'])
+@login_required
+@admin_required
+def toggle_affection(aff_id):
+    aff = db.session.get(Affection, aff_id)
+    if aff:
+        aff.actif = not aff.actif
+        db.session.commit()
+        etat = 'activée' if aff.actif else 'désactivée'
+        flash(f'Affection « {aff.libelle} » {etat}.', 'success')
+    return redirect(url_for('admin.liste_affections'))
+
+
+@admin_bp.route('/affections/<int:aff_id>/supprimer', methods=['POST'])
+@login_required
+@admin_required
+def supprimer_affection(aff_id):
+    aff = db.session.get(Affection, aff_id)
+    if not aff:
+        flash('Affection introuvable.', 'danger')
+        return redirect(url_for('admin.liste_affections'))
+
+    nb_lignes = LigneConsultation.query.filter_by(affection_id=aff_id).count()
+    if nb_lignes > 0:
+        flash(
+            f'Impossible de supprimer « {aff.libelle} » : {nb_lignes} ligne(s) de '
+            'consultation liée(s). Désactivez-la plutôt.',
+            'warning',
+        )
+    else:
+        libelle = aff.libelle
+        db.session.delete(aff)
+        db.session.commit()
+        flash(f'Affection « {libelle} » supprimée définitivement.', 'success')
+
+    return redirect(url_for('admin.liste_affections'))
 
 
 @admin_bp.route('/toutes-editions/import-excel', methods=['POST'])

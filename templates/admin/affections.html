@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Affections{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3">
+
+  <!-- En-tête -->
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <h2 class="page-title mb-0">
+      <i class="bi bi-virus2 text-green"></i> Gestion des Affections
+    </h2>
+    <a href="{{ url_for('admin.nouvelle_affection') }}" class="btn btn-success">
+      <i class="bi bi-plus-circle-fill"></i> Nouvelle affection
+    </a>
+  </div>
+
+  <!-- KPI cards -->
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm h-100 position-relative">
+        <div class="card-body">
+          <p class="text-muted small mb-1">Total</p>
+          <h3 class="fw-bold text-green">{{ nb_total }}</h3>
+        </div>
+        <i class="bi bi-list-ul stat-icon text-success"></i>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm h-100 position-relative">
+        <div class="card-body">
+          <p class="text-muted small mb-1">Actives</p>
+          <h3 class="fw-bold text-primary">{{ nb_actifs }}</h3>
+        </div>
+        <i class="bi bi-check-circle-fill stat-icon text-primary"></i>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm h-100 position-relative" style="border-left-color:#dc3545!important;">
+        <div class="card-body">
+          <p class="text-muted small mb-1">MPE</p>
+          <h3 class="fw-bold text-danger">{{ nb_mpe }}</h3>
+        </div>
+        <i class="bi bi-exclamation-triangle-fill stat-icon text-danger"></i>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm h-100 position-relative" style="border-left-color:#6c757d!important;">
+        <div class="card-body">
+          <p class="text-muted small mb-1">Inactives</p>
+          <h3 class="fw-bold text-secondary">{{ nb_total - nb_actifs }}</h3>
+        </div>
+        <i class="bi bi-x-circle-fill stat-icon text-secondary"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+      <form method="GET" class="row g-2 align-items-end">
+        <div class="col-12 col-md-4">
+          <label class="form-label small mb-1">Rechercher</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" name="q" class="form-control" placeholder="Libellé…" value="{{ q }}">
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label small mb-1">Catégorie</label>
+          <select name="categorie" class="form-select form-select-sm">
+            <option value="">Toutes</option>
+            {% for val, label in categories %}
+            <option value="{{ val }}" {% if selected_categorie == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label small mb-1">MPE</label>
+          <select name="mpe" class="form-select form-select-sm">
+            <option value="">Tous</option>
+            <option value="1" {% if selected_mpe == '1' %}selected{% endif %}>MPE uniquement</option>
+            <option value="0" {% if selected_mpe == '0' %}selected{% endif %}>Non MPE</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-3 d-flex gap-2">
+          <button type="submit" class="btn btn-sm btn-primary flex-grow-1">
+            <i class="bi bi-funnel-fill"></i> Filtrer
+          </button>
+          <a href="{{ url_for('admin.liste_affections') }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-x-lg"></i>
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tableau -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0 table-stack-wrap">
+      {% if affections %}
+      <div class="table-responsive">
+        <table class="table table-magal table-stack mb-0">
+          <thead>
+            <tr>
+              <th class="text-center" style="width:60px;">N°</th>
+              <th>Libellé</th>
+              <th>Catégorie</th>
+              <th class="text-center">MPE</th>
+              <th class="text-center">Statut</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for aff in affections %}
+            <tr class="{% if not aff.actif %}table-secondary text-muted{% endif %}">
+              <td class="text-center fw-semibold" data-label="N°">{{ aff.numero }}</td>
+              <td class="fw-semibold" data-label="Libellé">
+                {{ aff.libelle }}
+              </td>
+              <td data-label="Catégorie">
+                {% set cat_labels = dict(categories) %}
+                <span class="badge bg-secondary bg-opacity-75">
+                  {{ cat_labels.get(aff.categorie, aff.categorie) }}
+                </span>
+              </td>
+              <td class="text-center" data-label="MPE">
+                {% if aff.is_mpe %}
+                <span class="badge bg-danger"><i class="bi bi-exclamation-triangle-fill"></i> MPE</span>
+                {% else %}
+                <span class="text-muted small">—</span>
+                {% endif %}
+              </td>
+              <td class="text-center" data-label="Statut">
+                {% if aff.actif %}
+                <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Active</span>
+                {% else %}
+                <span class="badge bg-secondary"><i class="bi bi-x-circle-fill"></i> Inactive</span>
+                {% endif %}
+              </td>
+              <td class="text-center" data-label="">
+                <div class="d-flex justify-content-center gap-1 flex-wrap">
+                  <a href="{{ url_for('admin.modifier_affection', aff_id=aff.id) }}"
+                     class="btn btn-sm btn-outline-primary py-0 px-2"
+                     title="Modifier">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <!-- Toggle actif/inactif -->
+                  <form method="POST"
+                        action="{{ url_for('admin.toggle_affection', aff_id=aff.id) }}"
+                        class="d-inline">
+                    <button type="submit"
+                            class="btn btn-sm py-0 px-2 {% if aff.actif %}btn-outline-warning{% else %}btn-outline-success{% endif %}"
+                            title="{{ 'Désactiver' if aff.actif else 'Activer' }}">
+                      <i class="bi bi-{% if aff.actif %}pause-circle{% else %}play-circle{% endif %}"></i>
+                    </button>
+                  </form>
+                  <!-- Suppression (uniquement si aucune consultation liée) -->
+                  <form method="POST"
+                        action="{{ url_for('admin.supprimer_affection', aff_id=aff.id) }}"
+                        class="d-inline"
+                        onsubmit="return confirm('Supprimer définitivement « {{ aff.libelle }} » ?')">
+                    <button type="submit"
+                            class="btn btn-sm btn-outline-danger py-0 px-2"
+                            title="Supprimer">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="p-2 text-muted small text-end border-top">
+        {{ affections|length }} affection(s) affichée(s)
+        {% if q or selected_categorie or selected_mpe %}
+        sur {{ nb_total }} au total
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-virus2 fs-1 opacity-25"></i>
+        <p class="mt-2">Aucune affection trouvée.</p>
+        {% if q or selected_categorie or selected_mpe %}
+        <a href="{{ url_for('admin.liste_affections') }}" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-x-circle"></i> Effacer les filtres
+        </a>
+        {% else %}
+        <a href="{{ url_for('admin.nouvelle_affection') }}" class="btn btn-sm btn-success">
+          <i class="bi bi-plus-circle"></i> Créer la première affection
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
