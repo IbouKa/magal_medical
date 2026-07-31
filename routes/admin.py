@@ -733,6 +733,27 @@ def export_rapport_excel():
 # TOUTES LES ÉDITIONS — Vue comparée multi-éditions + import Excel
 # ─────────────────────────────────────────────────────────────────────────────
 
+# Corrections de noms d'EPS avec accents ou variantes orthographiques
+# clé = valeur brute en MAJUSCULES telle qu'elle apparaît dans les exports Excel
+# valeur = nom normalisé correspondant à la BDD
+EPS_NOM_CORRECTIONS = {
+    'PS MBOUSSOBÉ':  'PS MBOUSSOBE',
+    'PS HÉLIPORT':   'PS HELIPORT',
+    'PS THIAWÈNE':   'PS THIAWENE',
+    'PS GUÉDÉ KAW':  'PS GUEDE KAW',
+}
+
+# Corrections de libellés d'affections avec variantes orthographiques ou doubles espaces
+# clé = libellé brut tel qu'il apparaît dans l'export (sensible à la casse après .strip())
+# valeur = libellé normalisé correspondant à la BDD
+AFFECTION_CORRECTIONS = {
+    'Affections  Respiratoires':              'Affections Respiratoires',
+    'Gastroentérite/intoxication':            'Gastroentérite / Intoxication',
+    "Affections de l'œil et annexes":         "Affections de l'oeil et annexes",
+    'Maladies  chroniques (diabète,…)':       'Maladies chroniques (diabète, drépanocytose...)',
+    'Rougeole':                               'Cas suspect de Rougeole',
+}
+
 def _build_editions_stats():
     """Construit les données statistiques pour toutes les éditions."""
     editions = Edition.query.order_by(Edition.annee).all()
@@ -926,6 +947,7 @@ def import_excel_editions():
             cas_simples = hospitalises = evacues = decedes = 0
 
             try:
+                district_raw      = str(row[1]).strip().upper() if row[1] is not None else None
                 periode           = str(row[2]).strip() if row[2] is not None else None
                 affection_libelle = str(row[3]).strip() if row[3] is not None else None
                 cas_simples       = int(float(row[4])) if row[4] is not None else 0
@@ -934,6 +956,9 @@ def import_excel_editions():
                 decedes           = int(float(row[7])) if row[7] is not None else 0
                 eps_nom_raw       = str(row[8]).strip().upper() if row[8] is not None else None
                 edition_annee     = int(float(row[9])) if row[9] is not None else None
+                # Si la colonne Structures pps/CS est vide, utiliser le District comme EPS
+                if not eps_nom_raw and district_raw:
+                    eps_nom_raw = district_raw
             except (ValueError, TypeError) as ex:
                 db.session.add(ImportLogLigne(
                     import_log_id=import_log.id,
@@ -991,6 +1016,9 @@ def import_excel_editions():
                 edition_cache[edition_annee] = ed
             edition = edition_cache[edition_annee]
 
+            # ── Pré-traitement : correction des noms d'EPS accentués ──
+            eps_nom_raw = EPS_NOM_CORRECTIONS.get(eps_nom_raw, eps_nom_raw)
+
             # ── EPS (find, case-insensitive) ──
             if eps_nom_raw not in eps_cache:
                 eps = EPS.query.filter(func.upper(EPS.nom) == eps_nom_raw).first()
@@ -1012,6 +1040,9 @@ def import_excel_editions():
                 ))
                 skipped += 1
                 continue
+
+            # ── Pré-traitement : correction des libellés d'affections ──
+            affection_libelle = AFFECTION_CORRECTIONS.get(affection_libelle, affection_libelle)
 
             # ── Affection ──
             aff_key = affection_libelle.lower()
