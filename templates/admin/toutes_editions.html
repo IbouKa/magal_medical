@@ -1,0 +1,559 @@
+{% extends "base.html" %}
+{% block title %}Toutes les Éditions{% endblock %}
+
+{% block extra_head %}
+<style>
+  .edition-badge-active {
+    background: linear-gradient(135deg, #198754, #20c997);
+    color: #fff;
+    font-size: .7rem;
+    padding: 2px 7px;
+    border-radius: 30px;
+  }
+  .upload-zone {
+    border: 2px dashed #adb5bd;
+    border-radius: 12px;
+    background: #f8f9fa;
+    transition: border-color .2s, background .2s;
+    cursor: pointer;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: #198754;
+    background: #e8f5e9;
+  }
+  .upload-zone .bi-cloud-upload-fill { font-size: 2.5rem; color: #adb5bd; }
+  .upload-zone:hover .bi-cloud-upload-fill { color: #198754; }
+  .chart-container  { position: relative; height: 320px; }
+  .chart-container-lg { position: relative; height: 400px; }
+  .table-editions th { white-space: nowrap; font-size: .83rem; }
+  .table-editions td { font-size: .85rem; vertical-align: middle; }
+  .format-hint {
+    font-size: .75rem;
+    color: #6c757d;
+    background: #fff3cd;
+    border-radius: 8px;
+    padding: 8px 12px;
+  }
+  .section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a6b3c;
+    border-bottom: 2px solid #e8f5e9;
+    padding-bottom: .4rem;
+    margin-bottom: 1rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+  <!-- En-tête -->
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h4 class="mb-0 fw-bold text-success">
+        <i class="bi bi-calendar2-range me-2"></i>Toutes les Éditions
+      </h4>
+      <small class="text-muted">Vue comparative, import Excel et graphiques multi-éditions</small>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Tableau de bord
+      </a>
+      <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#modalImport">
+        <i class="bi bi-cloud-upload me-1"></i> Importer Excel
+      </button>
+    </div>
+  </div>
+
+  {% if not editions %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-calendar-x" style="font-size:3rem;opacity:.3;"></i>
+    <p class="mt-3">Aucune édition enregistrée.</p>
+    <a href="{{ url_for('admin.nouvelle_edition') }}" class="btn btn-success btn-sm">
+      <i class="bi bi-plus-circle"></i> Créer une édition
+    </a>
+  </div>
+  {% else %}
+
+  <!-- Tableau récapitulatif -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-success text-white py-2">
+      <i class="bi bi-table me-1"></i>
+      <strong>Récapitulatif par édition</strong>
+      <span class="badge bg-white text-success ms-2">{{ editions|length }} édition(s)</span>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped mb-0 table-editions">
+          <thead class="table-success">
+            <tr>
+              <th>Édition</th>
+              <th>Libellé</th>
+              <th class="text-center">Fiches</th>
+              <th class="text-end text-success">Consultants</th>
+              <th class="text-end">Cas simples</th>
+              <th class="text-end text-warning">Hospitalisés</th>
+              <th class="text-end text-info">Évacués</th>
+              <th class="text-end text-danger">Décédés</th>
+              <th class="text-center">Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in stats_by_edition %}
+            <tr>
+              <td><strong>{{ s.annee }}</strong></td>
+              <td class="text-muted">{{ s.libelle }}</td>
+              <td class="text-center"><span class="badge bg-secondary">{{ s.nb_fiches }}</span></td>
+              <td class="text-end fw-bold text-success">{{ "{:,}".format(s.consultants).replace(",", "\u00a0") }}</td>
+              <td class="text-end">{{ "{:,}".format(s.simples).replace(",", "\u00a0") }}</td>
+              <td class="text-end text-warning fw-semibold">{{ "{:,}".format(s.hospit).replace(",", "\u00a0") }}</td>
+              <td class="text-end text-info fw-semibold">{{ "{:,}".format(s.evacues).replace(",", "\u00a0") }}</td>
+              <td class="text-end {% if s.decedes > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">
+                {{ "{:,}".format(s.decedes).replace(",", "\u00a0") }}
+              </td>
+              <td class="text-center">
+                {% if s.active %}
+                <span class="edition-badge-active"><i class="bi bi-check-circle-fill me-1"></i>Active</span>
+                {% else %}
+                <span class="badge bg-light text-secondary">Archivée</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot class="table-light fw-bold">
+            <tr>
+              <td colspan="3" class="text-end text-muted">Totaux cumulés</td>
+              <td class="text-end text-success">{{ "{:,}".format(stats_by_edition|sum(attribute='consultants')).replace(",", "\u00a0") }}</td>
+              <td class="text-end">{{ "{:,}".format(stats_by_edition|sum(attribute='simples')).replace(",", "\u00a0") }}</td>
+              <td class="text-end text-warning">{{ "{:,}".format(stats_by_edition|sum(attribute='hospit')).replace(",", "\u00a0") }}</td>
+              <td class="text-end text-info">{{ "{:,}".format(stats_by_edition|sum(attribute='evacues')).replace(",", "\u00a0") }}</td>
+              <td class="text-end text-danger">{{ "{:,}".format(stats_by_edition|sum(attribute='decedes')).replace(",", "\u00a0") }}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graphiques ligne 1 : Global + Doughnut -->
+  <div class="row g-3 mb-3">
+    <div class="col-lg-7">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <p class="section-title"><i class="bi bi-bar-chart-fill me-1"></i>Consultations totales par édition</p>
+          <div class="chart-container"><canvas id="chartGlobal"></canvas></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <p class="section-title"><i class="bi bi-pie-chart-fill me-1"></i>Répartition cumulée (toutes éditions)</p>
+          <div class="chart-container"><canvas id="chartDoughnut"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graphiques ligne 2 : Évolution par période -->
+  <div class="row g-3 mb-3">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <p class="section-title"><i class="bi bi-graph-up me-1"></i>Évolution par période (J-2 → J+3) — comparaison inter-éditions</p>
+          <div class="chart-container-lg"><canvas id="chartPeriode"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graphiques ligne 3 : Top affections + Districts -->
+  <div class="row g-3 mb-3">
+    <div class="col-lg-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <p class="section-title"><i class="bi bi-list-ol me-1"></i>Top 10 affections — toutes éditions confondues</p>
+          <div class="chart-container-lg"><canvas id="chartTopAff"></canvas></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <p class="section-title"><i class="bi bi-geo-alt-fill me-1"></i>Consultations par district — toutes éditions</p>
+          <div class="chart-container-lg"><canvas id="chartDistrict"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graphiques ligne 4 : MPE -->
+  <div class="row g-3 mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-danger">
+        <div class="card-header bg-danger bg-opacity-10 text-danger py-2">
+          <i class="bi bi-exclamation-triangle-fill me-1"></i>
+          <strong>Maladies à Potentiel Épidémique (MPE) — suivi inter-éditions</strong>
+        </div>
+        <div class="card-body">
+          <div class="chart-container-lg"><canvas id="chartMpe"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% endif %}
+</div>
+
+<!-- Modal Import Excel -->
+<div class="modal fade" id="modalImport" tabindex="-1" aria-labelledby="modalImportLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="modalImportLabel">
+          <i class="bi bi-cloud-upload me-2"></i>Importer des données Excel
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Zone de drop -->
+        <div class="upload-zone text-center py-4 px-3 mb-3" id="dropZone"
+             onclick="document.getElementById('excel_file').click()">
+          <i class="bi bi-cloud-upload-fill d-block mb-2"></i>
+          <p class="mb-1 fw-semibold text-secondary">Cliquez ou glissez-déposez votre fichier Excel ici</p>
+          <small class="text-muted">Formats acceptés : .xlsx, .xls</small>
+        </div>
+
+        <!-- Aperçu fichier sélectionné -->
+        <div id="filePreview" class="mb-3 d-none">
+          <div class="alert alert-success py-2 d-flex align-items-center gap-2 mb-0">
+            <i class="bi bi-file-earmark-excel-fill fs-5 text-success"></i>
+            <div>
+              <strong id="previewName">—</strong>
+              <span class="text-muted ms-2" id="previewSize">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Format attendu -->
+        <div class="format-hint mb-3">
+          <i class="bi bi-info-circle-fill me-1 text-warning"></i>
+          <strong>Format attendu (10 colonnes, identique à l'export Rapports) :</strong><br>
+          <code>N° | District | Période | Affection | Cas simples | Hospitalisés | Évacués | Décédés | Structures pps/CS | Édition</code><br>
+          <span class="mt-1 d-block">
+            La 1<sup>re</sup> ligne doit être l'en-tête. Les données existantes seront <strong>mises à jour</strong>.
+            Les nouvelles éditions sont créées automatiquement.
+          </span>
+        </div>
+
+        <!-- Formulaire -->
+        <form method="POST"
+              action="{{ url_for('admin.import_excel_editions') }}"
+              enctype="multipart/form-data"
+              id="importForm">
+          <input type="file" name="excel_file" id="excel_file"
+                 accept=".xlsx,.xls" class="d-none">
+          <div class="d-flex gap-2 justify-content-end">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+              <i class="bi bi-x-circle me-1"></i>Annuler
+            </button>
+            <button type="submit" class="btn btn-success" id="btnImport" disabled>
+              <i class="bi bi-cloud-upload me-1"></i>Lancer l'import
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Données graphiques injectées depuis Python ────────────
+var chartGlobalData   = {{ chart_global   | safe }};
+var chartPeriodeData  = {{ chart_periode  | safe }};
+var chartTopAffData   = {{ chart_top_aff  | safe }};
+var chartDistrictData = {{ chart_district | safe }};
+var chartMpeData      = {{ chart_mpe      | safe }};
+
+// ── Upload zone ───────────────────────────────────────────
+var dropZone = document.getElementById('dropZone');
+var fileInput = document.getElementById('excel_file');
+var btnImport = document.getElementById('btnImport');
+var filePreview = document.getElementById('filePreview');
+
+if (fileInput) {
+  fileInput.addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+      var f = this.files[0];
+      document.getElementById('previewName').textContent = f.name;
+      document.getElementById('previewSize').textContent = (f.size / 1024).toFixed(1) + ' Ko';
+      filePreview.classList.remove('d-none');
+      btnImport.disabled = false;
+    }
+  });
+}
+
+if (dropZone) {
+  dropZone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+  });
+  dropZone.addEventListener('dragleave', function() {
+    dropZone.classList.remove('drag-over');
+  });
+  dropZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    if (e.dataTransfer.files.length) {
+      fileInput.files = e.dataTransfer.files;
+      fileInput.dispatchEvent(new Event('change'));
+    }
+  });
+  dropZone.addEventListener('click', function() {
+    fileInput.click();
+  });
+}
+
+// ── Chart 1 : Barres groupées — Consultations par édition ─
+(function() {
+  var el = document.getElementById('chartGlobal');
+  if (!el || !chartGlobalData.labels || !chartGlobalData.labels.length) return;
+  new Chart(el, {
+    type: 'bar',
+    data: {
+      labels: chartGlobalData.labels,
+      datasets: chartGlobalData.datasets.map(function(ds) {
+        return {
+          label: ds.label,
+          data: ds.data,
+          backgroundColor: ds.color + 'cc',
+          borderColor: ds.color,
+          borderWidth: 1.5,
+          borderRadius: 4
+        };
+      })
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) { return ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString(); }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, ticks: { callback: function(v) { return v.toLocaleString(); } } }
+      }
+    }
+  });
+})();
+
+// ── Chart 2 : Doughnut — Répartition cumulée ─────────────
+(function() {
+  var el = document.getElementById('chartDoughnut');
+  if (!el || !chartGlobalData.datasets || !chartGlobalData.datasets.length) return;
+  var sums = chartGlobalData.datasets.map(function(ds) {
+    return ds.data.reduce(function(a, b) { return a + b; }, 0);
+  });
+  new Chart(el, {
+    type: 'doughnut',
+    data: {
+      labels: chartGlobalData.datasets.map(function(ds) { return ds.label; }),
+      datasets: [{
+        data: sums,
+        backgroundColor: chartGlobalData.datasets.map(function(ds) { return ds.color + 'cc'; }),
+        borderColor: chartGlobalData.datasets.map(function(ds) { return ds.color; }),
+        borderWidth: 2,
+        hoverOffset: 10
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '60%',
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) { return ' ' + ctx.label + ': ' + ctx.parsed.toLocaleString(); }
+          }
+        }
+      }
+    }
+  });
+})();
+
+// ── Chart 3 : Lignes — Évolution par période ─────────────
+(function() {
+  var el = document.getElementById('chartPeriode');
+  if (!el || !chartPeriodeData.labels || !chartPeriodeData.labels.length) return;
+  new Chart(el, {
+    type: 'line',
+    data: {
+      labels: chartPeriodeData.labels,
+      datasets: chartPeriodeData.datasets.map(function(ds) {
+        return {
+          label: ds.label,
+          data: ds.data,
+          borderColor: ds.color,
+          backgroundColor: ds.color + '22',
+          fill: true,
+          tension: 0.35,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 2
+        };
+      })
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) { return ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString(); }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, ticks: { callback: function(v) { return v.toLocaleString(); } } }
+      }
+    }
+  });
+})();
+
+// ── Chart 4 : Barres horizontales — Top affections ───────
+(function() {
+  var el = document.getElementById('chartTopAff');
+  if (!el || !chartTopAffData.labels || !chartTopAffData.labels.length) return;
+  var palette = [
+    '#198754','#0d6efd','#fd7e14','#dc3545','#6610f2',
+    '#20c997','#ffc107','#0dcaf0','#6c757d','#e83e8c'
+  ];
+  new Chart(el, {
+    type: 'bar',
+    data: {
+      labels: chartTopAffData.labels.map(function(l) {
+        return l.length > 35 ? l.slice(0, 33) + '\u2026' : l;
+      }),
+      datasets: [{
+        label: 'Total consultations',
+        data: chartTopAffData.data,
+        backgroundColor: palette.map(function(c) { return c + 'cc'; }),
+        borderColor: palette,
+        borderWidth: 1.5,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: function(items) { return chartTopAffData.labels[items[0].dataIndex]; },
+            label: function(ctx) { return ' Total: ' + ctx.parsed.x.toLocaleString(); }
+          }
+        }
+      },
+      scales: {
+        x: { beginAtZero: true, ticks: { callback: function(v) { return v.toLocaleString(); } } },
+        y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+})();
+
+// ── Chart 5 : Barres — Consultations par district ────────
+(function() {
+  var el = document.getElementById('chartDistrict');
+  if (!el || !chartDistrictData.labels || !chartDistrictData.labels.length) return;
+  var palette = ['#198754','#0d6efd','#fd7e14','#dc3545','#6610f2','#20c997','#ffc107','#0dcaf0','#6c757d','#e83e8c'];
+  new Chart(el, {
+    type: 'bar',
+    data: {
+      labels: chartDistrictData.labels.map(function(l) { return l.length > 22 ? l.slice(0,20)+'\u2026' : l; }),
+      datasets: [{
+        label: 'Consultations',
+        data: chartDistrictData.data,
+        backgroundColor: chartDistrictData.labels.map(function(_,i){ return palette[i % palette.length]+'cc'; }),
+        borderColor: chartDistrictData.labels.map(function(_,i){ return palette[i % palette.length]; }),
+        borderWidth: 1.5,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: function(items) { return chartDistrictData.labels[items[0].dataIndex]; },
+            label: function(ctx) { return ' Total: ' + ctx.parsed.y.toLocaleString(); }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { beginAtZero: true, ticks: { callback: function(v) { return v.toLocaleString(); } } }
+      }
+    }
+  });
+})();
+
+// ── Chart 6 : Barres groupées — MPE par édition ──────────
+(function() {
+  var el = document.getElementById('chartMpe');
+  if (!el || !chartMpeData.labels || !chartMpeData.labels.length) return;
+  if (!chartMpeData.datasets || !chartMpeData.datasets.length) return;
+  new Chart(el, {
+    type: 'bar',
+    data: {
+      labels: chartMpeData.labels,
+      datasets: chartMpeData.datasets.map(function(ds) {
+        return {
+          label: ds.label.length > 30 ? ds.label.slice(0,28)+'\u2026' : ds.label,
+          data: ds.data,
+          backgroundColor: ds.color + 'cc',
+          borderColor: ds.color,
+          borderWidth: 1.5,
+          borderRadius: 3
+        };
+      })
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 12 } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) { return ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString(); }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, ticks: { callback: function(v) { return v.toLocaleString(); } } }
+      }
+    }
+  });
+})();
+</script>
+{% endblock %}

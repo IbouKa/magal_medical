@@ -1,10 +1,11 @@
 import io
+import json
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, send_file
 from flask_login import login_required, current_user
 from functools import wraps
 from datetime import datetime
 from sqlalchemy import func
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from models import (
@@ -725,3 +726,307 @@ def export_rapport_excel():
         as_attachment=True,
         download_name=filename
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TOUTES LES ÉDITIONS — Vue comparée multi-éditions + import Excel
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _build_editions_stats():
+    """Construit les données statistiques pour toutes les éditions."""
+    editions = Edition.query.order_by(Edition.annee).all()
+
+    # ── Résumé par édition ──────────────────────────────────
+    stats_by_edition = []
+    for ed in editions:
+        q = db.session.query(
+            func.sum(LigneConsultation.cas_simples),
+            func.sum(LigneConsultation.hospitalises),
+            func.sum(LigneConsultation.evacues),
+            func.sum(LigneConsultation.decedes)
+        ).join(FicheJournaliere).filter(FicheJournaliere.edition_id == ed.id).first()
+        s = q[0] or 0
+        h = q[1] or 0
+        e = q[2] or 0
+        d = q[3] or 0
+        stats_by_edition.append({
+            'annee': ed.annee,
+            'libelle': ed.libelle or f'Edition {ed.annee}',
+            'active': ed.active,
+            'consultants': s + h + e,
+            'simples': s,
+            'hospit': h,
+            'evacues': e,
+            'decedes': d,
+            'nb_fiches': FicheJournaliere.query.filter_by(edition_id=ed.id).count(),
+        })
+
+    annees = [s['annee'] for s in stats_by_edition]
+
+    # ── Chart 1 : Consultations totales par édition (barres groupées) ──
+    chart_global = {
+        'labels': annees,
+        'datasets': [
+            {'label': 'Cas simples',    'data': [s['simples']     for s in stats_by_edition], 'color': '#198754'},
+            {'label': 'Hospitalisés',   'data': [s['hospit']      for s in stats_by_edition], 'color': '#fd7e14'},
+            {'label': 'Évacués',        'data': [s['evacues']     for s in stats_by_edition], 'color': '#0dcaf0'},
+            {'label': 'Décédés',        'data': [s['decedes']     for s in stats_by_edition], 'color': '#dc3545'},
+        ]
+    }
+
+    # ── Chart 2 : Évolution par période pour chaque édition (lignes) ──
+    palette = ['#198754', '#0d6efd', '#fd7e14', '#dc3545', '#6610f2', '#20c997', '#ffc107', '#0dcaf0']
+    period_datasets = []
+    for i, ed in enumerate(editions):
+        period_data = []
+        for p in PERIODES:
+            q2 = db.session.query(
+                func.sum(LigneConsultation.cas_simples + LigneConsultation.hospitalises + LigneConsultation.evacues)
+            ).join(FicheJournaliere).filter(
+                FicheJournaliere.edition_id == ed.id,
+                FicheJournaliere.periode == p
+            ).scalar() or 0
+            period_data.append(q2)
+        period_datasets.append({
+            'label': str(ed.annee),
+            'data': period_data,
+            'color': palette[i % len(palette)],
+        })
+    chart_periode = {
+        'labels': PERIODES,
+        'datasets': period_datasets,
+    }
+
+    # ── Chart 3 : Top 10 affections cumulées toutes éditions ──
+    top_aff_rows = db.session.query(
+        Affection.libelle,
+        func.sum(LigneConsultation.cas_simples + LigneConsultation.hospitalises + LigneConsultation.evacues).label('total')
+    ).join(LigneConsultation).group_by(Affection.libelle).order_by(
+        func.sum(LigneConsultation.cas_simples + LigneConsultation.hospitalises + LigneConsultation.evacues).desc()
+    ).limit(10).all()
+    chart_top_aff = {
+        'labels': [r.libelle for r in top_aff_rows],
+        'data':   [r.total   for r in top_aff_rows],
+    }
+
+    # ── Chart 4 : Consultations par district cumulées ──
+    dist_rows = db.session.query(
+        District.nom,
+        func.sum(LigneConsultation.cas_simples + LigneConsultation.hospitalises + LigneConsultation.evacues).label('total')
+    ).join(EPS, District.id == EPS.district_id).join(
+        FicheJournaliere, EPS.id == FicheJournaliere.eps_id
+    ).join(LigneConsultation).group_by(District.nom).order_by(
+        func.sum(LigneConsultation.cas_simples + LigneConsultation.hospitalises + LigneConsultation.evacues).desc()
+    ).all()
+    chart_district = {
+        'labels': [r.nom   for r in dist_rows],
+        'data':   [r.total for r in dist_rows],
+    }
+
+    # ── Chart 5 : MPE (Maladies à Potentiel Épidémique) par édition ──
+    mpe_datasets = []
+    mpe_affections = Affection.query.filter_by(is_mpe=True, actif=True).order_by(Affection.numero).all()
+    for i, aff in enumerate(mpe_affections):
+        mpe_data = []
+        for ed in editions:
+            val = db.session.query(
+                func.sum(LigneConsultation.cas_simples + LigneConsultation.hospitalises + LigneConsultation.evacues)
+            ).join(FicheJournaliere).filter(
+                FicheJournaliere.edition_id == ed.id,
+                LigneConsultation.affection_id == aff.id
+            ).scalar() or 0
+            mpe_data.append(val)
+        mpe_datasets.append({
+            'label': aff.libelle,
+            'data':  mpe_data,
+            'color': palette[i % len(palette)],
+        })
+    chart_mpe = {
+        'labels': annees,
+        'datasets': mpe_datasets,
+    }
+
+    return {
+        'editions': editions,
+        'stats_by_edition': stats_by_edition,
+        'chart_global': json.dumps(chart_global),
+        'chart_periode': json.dumps(chart_periode),
+        'chart_top_aff': json.dumps(chart_top_aff),
+        'chart_district': json.dumps(chart_district),
+        'chart_mpe': json.dumps(chart_mpe),
+    }
+
+
+@admin_bp.route('/toutes-editions')
+@login_required
+@admin_required
+def toutes_editions():
+    data = _build_editions_stats()
+    return render_template('admin/toutes_editions.html', **data)
+
+
+@admin_bp.route('/toutes-editions/import-excel', methods=['POST'])
+@login_required
+@admin_required
+def import_excel_editions():
+    """
+    Importe un fichier Excel au format exporté (10 colonnes) :
+    N° | District | Période | Affection | Cas simples | Hospitalisés |
+    Evacuées | Décédés | Structures pps/CS | Edition (année)
+    Crée les données si elles n'existent pas, les met à jour sinon (upsert).
+    """
+    file = request.files.get('excel_file')
+    if not file or file.filename == '':
+        flash('Aucun fichier sélectionné.', 'danger')
+        return redirect(url_for('admin.toutes_editions'))
+
+    try:
+        wb = load_workbook(file, data_only=True, read_only=True)
+        ws = wb.active
+
+        created = 0
+        updated = 0
+        skipped = 0
+        warnings = []
+
+        # Cache pour éviter les requêtes répétées
+        eps_cache        = {}
+        edition_cache    = {}
+        affection_cache  = {}
+
+        for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            # Ignorer les lignes vides
+            if not row or not any(v is not None for v in row):
+                continue
+
+            # ── Extraction des valeurs ──
+            try:
+                periode          = str(row[2]).strip() if row[2] is not None else None
+                affection_libelle = str(row[3]).strip() if row[3] is not None else None
+                cas_simples      = int(float(row[4])) if row[4] is not None else 0
+                hospitalises     = int(float(row[5])) if row[5] is not None else 0
+                evacues          = int(float(row[6])) if row[6] is not None else 0
+                decedes          = int(float(row[7])) if row[7] is not None else 0
+                eps_nom_raw      = str(row[8]).strip().upper() if row[8] is not None else None
+                edition_annee    = int(float(row[9])) if row[9] is not None else None
+            except (ValueError, TypeError) as ex:
+                warnings.append(f'Ligne {row_idx}: valeur invalide — {ex}')
+                skipped += 1
+                continue
+
+            # Validation des champs obligatoires
+            if not all([periode, affection_libelle, eps_nom_raw, edition_annee]):
+                skipped += 1
+                continue
+
+            if periode not in PERIODES:
+                warnings.append(f'Ligne {row_idx}: période inconnue « {periode} »')
+                skipped += 1
+                continue
+
+            # ── Edition (find or create) ──
+            if edition_annee not in edition_cache:
+                ed = Edition.query.filter_by(annee=edition_annee).first()
+                if not ed:
+                    ed = Edition(
+                        annee=edition_annee,
+                        libelle=f'Grand Magal de Touba Edition {edition_annee}',
+                        active=False
+                    )
+                    db.session.add(ed)
+                    db.session.flush()
+                edition_cache[edition_annee] = ed
+            edition = edition_cache[edition_annee]
+
+            # ── EPS (find, case-insensitive) ──
+            if eps_nom_raw not in eps_cache:
+                eps = EPS.query.filter(func.upper(EPS.nom) == eps_nom_raw).first()
+                if not eps:
+                    # Essai : correspondance partielle (premiers 15 chars)
+                    eps = EPS.query.filter(EPS.nom.ilike(f'{eps_nom_raw[:15]}%')).first()
+                eps_cache[eps_nom_raw] = eps
+            eps = eps_cache[eps_nom_raw]
+
+            if not eps:
+                warnings.append(f'Ligne {row_idx}: EPS introuvable « {eps_nom_raw} »')
+                skipped += 1
+                continue
+
+            # ── Affection (find, correspondance exacte puis approchée) ──
+            aff_key = affection_libelle.lower()
+            if aff_key not in affection_cache:
+                aff = Affection.query.filter(
+                    func.lower(Affection.libelle) == aff_key
+                ).first()
+                if not aff:
+                    # Correspondance sur les 20 premiers caractères
+                    aff = Affection.query.filter(
+                        Affection.libelle.ilike(f'{affection_libelle[:20]}%')
+                    ).first()
+                affection_cache[aff_key] = aff
+            affection = affection_cache[aff_key]
+
+            if not affection:
+                warnings.append(f'Ligne {row_idx}: affection introuvable « {affection_libelle[:40]} »')
+                skipped += 1
+                continue
+
+            # ── FicheJournaliere (find or create) ──
+            fiche = FicheJournaliere.query.filter_by(
+                eps_id=eps.id,
+                edition_id=edition.id,
+                periode=periode
+            ).first()
+            if not fiche:
+                fiche = FicheJournaliere(
+                    eps_id=eps.id,
+                    edition_id=edition.id,
+                    periode=periode,
+                    saisi_par='Import Excel',
+                    statut='soumis'
+                )
+                db.session.add(fiche)
+                db.session.flush()
+
+            # ── LigneConsultation (upsert) ──
+            ligne = LigneConsultation.query.filter_by(
+                fiche_id=fiche.id,
+                affection_id=affection.id
+            ).first()
+            if ligne:
+                ligne.cas_simples  = max(0, cas_simples)
+                ligne.hospitalises = max(0, hospitalises)
+                ligne.evacues      = max(0, evacues)
+                ligne.decedes      = max(0, decedes)
+                updated += 1
+            else:
+                ligne = LigneConsultation(
+                    fiche_id=fiche.id,
+                    affection_id=affection.id,
+                    cas_simples=max(0, cas_simples),
+                    hospitalises=max(0, hospitalises),
+                    evacues=max(0, evacues),
+                    decedes=max(0, decedes)
+                )
+                db.session.add(ligne)
+                created += 1
+
+        db.session.commit()
+
+        msg = f'Import terminé : {created} ligne(s) créée(s), {updated} mise(s) à jour'
+        if skipped:
+            msg += f', {skipped} ignorée(s)'
+        msg += '.'
+        flash(msg, 'success')
+
+        # Afficher les 8 premiers avertissements
+        for w in warnings[:8]:
+            flash(w, 'warning')
+        if len(warnings) > 8:
+            flash(f'… et {len(warnings) - 8} autre(s) avertissement(s).', 'warning')
+
+    except Exception as ex:
+        db.session.rollback()
+        flash(f"Erreur lors de l'import : {ex}", 'danger')
+
+    return redirect(url_for('admin.toutes_editions'))
