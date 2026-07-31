@@ -281,6 +281,48 @@ class Completude(db.Model):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# IMPORT LOG (historique des imports Excel)
+# ─────────────────────────────────────────────────────────────────────────────
+class ImportLog(db.Model):
+    __tablename__ = 'import_logs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(255), nullable=True)
+    date_import = db.Column(db.DateTime, default=datetime.utcnow)
+    fait_par = db.Column(db.String(100), nullable=True)
+    nb_created = db.Column(db.Integer, default=0)
+    nb_updated = db.Column(db.Integer, default=0)
+    nb_skipped = db.Column(db.Integer, default=0)
+    nb_total = db.Column(db.Integer, default=0)
+    statut = db.Column(db.String(20), default='ok')  # ok / erreur
+
+    lignes = db.relationship('ImportLogLigne', backref='import_log', lazy=True,
+                              cascade='all, delete-orphan',
+                              order_by='ImportLogLigne.row_num')
+
+    def __repr__(self):
+        return f'<ImportLog {self.id} {self.filename}>'
+
+
+class ImportLogLigne(db.Model):
+    __tablename__ = 'import_log_lignes'
+
+    id = db.Column(db.Integer, primary_key=True)
+    import_log_id = db.Column(db.Integer, db.ForeignKey('import_logs.id'), nullable=False)
+    row_num = db.Column(db.Integer, nullable=False)
+    # statut : ok | cree | mis_a_jour | ignore | avertissement | erreur
+    statut = db.Column(db.String(20), nullable=False, default='ok')
+    eps_nom = db.Column(db.String(150), nullable=True)
+    periode = db.Column(db.String(10), nullable=True)
+    affection = db.Column(db.String(200), nullable=True)
+    edition_annee = db.Column(db.Integer, nullable=True)
+    message = db.Column(db.String(300), nullable=True)
+
+    def __repr__(self):
+        return f'<ImportLogLigne row={self.row_num} statut={self.statut}>'
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # SEED DATA
 # ─────────────────────────────────────────────────────────────────────────────
 def seed_data():

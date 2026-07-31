@@ -10,7 +10,8 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from models import (
     User, District, EPS, Affection, Edition,
-    FicheJournaliere, LigneConsultation, ServiceDiagnostic, Completude
+    FicheJournaliere, LigneConsultation, ServiceDiagnostic, Completude,
+    ImportLog, ImportLogLigne
 )
 from extensions import db
 
@@ -862,6 +863,12 @@ def _build_editions_stats():
 @admin_required
 def toutes_editions():
     data = _build_editions_stats()
+    # Import logs (20 derniers, ordre décroissant)
+    import_logs = ImportLog.query.order_by(ImportLog.date_import.desc()).limit(20).all()
+    # ID du dernier import (pour ouvrir l'accordéon automatiquement après redirect)
+    last_import_id = request.args.get('log_id', type=int)
+    data['import_logs'] = import_logs
+    data['last_import_id'] = last_import_id
     return render_template('admin/toutes_editions.html', **data)
 
 
@@ -874,53 +881,99 @@ def import_excel_editions():
     N° | District | Période | Affection | Cas simples | Hospitalisés |
     Evacuées | Décédés | Structures pps/CS | Edition (année)
     Crée les données si elles n'existent pas, les met à jour sinon (upsert).
+    Enregistre un log détaillé dans ImportLog / ImportLogLigne.
     """
     file = request.files.get('excel_file')
     if not file or file.filename == '':
         flash('Aucun fichier sélectionné.', 'danger')
         return redirect(url_for('admin.toutes_editions'))
 
+    # ── Créer le log d'import ──
+    import_log = ImportLog(
+        filename=file.filename,
+        fait_par=current_user.nom_complet or current_user.username,
+        statut='ok'
+    )
+    db.session.add(import_log)
+    db.session.flush()   # obtenir import_log.id
+
+    created = 0
+    updated = 0
+    skipped = 0
+    nb_total = 0
+
     try:
         wb = load_workbook(file, data_only=True, read_only=True)
         ws = wb.active
 
-        created = 0
-        updated = 0
-        skipped = 0
-        warnings = []
-
         # Cache pour éviter les requêtes répétées
-        eps_cache        = {}
-        edition_cache    = {}
-        affection_cache  = {}
+        eps_cache       = {}
+        edition_cache   = {}
+        affection_cache = {}
 
         for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             # Ignorer les lignes vides
             if not row or not any(v is not None for v in row):
                 continue
 
+            nb_total += 1
+
             # ── Extraction des valeurs ──
+            periode           = None
+            affection_libelle = None
+            eps_nom_raw       = None
+            edition_annee     = None
+            cas_simples = hospitalises = evacues = decedes = 0
+
             try:
-                periode          = str(row[2]).strip() if row[2] is not None else None
+                periode           = str(row[2]).strip() if row[2] is not None else None
                 affection_libelle = str(row[3]).strip() if row[3] is not None else None
-                cas_simples      = int(float(row[4])) if row[4] is not None else 0
-                hospitalises     = int(float(row[5])) if row[5] is not None else 0
-                evacues          = int(float(row[6])) if row[6] is not None else 0
-                decedes          = int(float(row[7])) if row[7] is not None else 0
-                eps_nom_raw      = str(row[8]).strip().upper() if row[8] is not None else None
-                edition_annee    = int(float(row[9])) if row[9] is not None else None
+                cas_simples       = int(float(row[4])) if row[4] is not None else 0
+                hospitalises      = int(float(row[5])) if row[5] is not None else 0
+                evacues           = int(float(row[6])) if row[6] is not None else 0
+                decedes           = int(float(row[7])) if row[7] is not None else 0
+                eps_nom_raw       = str(row[8]).strip().upper() if row[8] is not None else None
+                edition_annee     = int(float(row[9])) if row[9] is not None else None
             except (ValueError, TypeError) as ex:
-                warnings.append(f'Ligne {row_idx}: valeur invalide — {ex}')
+                db.session.add(ImportLogLigne(
+                    import_log_id=import_log.id,
+                    row_num=row_idx,
+                    statut='erreur',
+                    eps_nom=eps_nom_raw,
+                    periode=periode,
+                    affection=affection_libelle,
+                    edition_annee=edition_annee,
+                    message=f'Valeur invalide : {ex}'
+                ))
                 skipped += 1
                 continue
 
-            # Validation des champs obligatoires
+            # ── Validation champs obligatoires ──
             if not all([periode, affection_libelle, eps_nom_raw, edition_annee]):
+                db.session.add(ImportLogLigne(
+                    import_log_id=import_log.id,
+                    row_num=row_idx,
+                    statut='ignore',
+                    eps_nom=eps_nom_raw,
+                    periode=periode,
+                    affection=affection_libelle,
+                    edition_annee=edition_annee,
+                    message='Champs obligatoires manquants (période, affection, EPS ou édition)'
+                ))
                 skipped += 1
                 continue
 
             if periode not in PERIODES:
-                warnings.append(f'Ligne {row_idx}: période inconnue « {periode} »')
+                db.session.add(ImportLogLigne(
+                    import_log_id=import_log.id,
+                    row_num=row_idx,
+                    statut='ignore',
+                    eps_nom=eps_nom_raw,
+                    periode=periode,
+                    affection=affection_libelle,
+                    edition_annee=edition_annee,
+                    message=f'Période inconnue : « {periode} »'
+                ))
                 skipped += 1
                 continue
 
@@ -942,24 +995,29 @@ def import_excel_editions():
             if eps_nom_raw not in eps_cache:
                 eps = EPS.query.filter(func.upper(EPS.nom) == eps_nom_raw).first()
                 if not eps:
-                    # Essai : correspondance partielle (premiers 15 chars)
                     eps = EPS.query.filter(EPS.nom.ilike(f'{eps_nom_raw[:15]}%')).first()
                 eps_cache[eps_nom_raw] = eps
             eps = eps_cache[eps_nom_raw]
 
             if not eps:
-                warnings.append(f'Ligne {row_idx}: EPS introuvable « {eps_nom_raw} »')
+                db.session.add(ImportLogLigne(
+                    import_log_id=import_log.id,
+                    row_num=row_idx,
+                    statut='ignore',
+                    eps_nom=eps_nom_raw,
+                    periode=periode,
+                    affection=affection_libelle,
+                    edition_annee=edition_annee,
+                    message=f'EPS introuvable : « {eps_nom_raw} »'
+                ))
                 skipped += 1
                 continue
 
-            # ── Affection (find, correspondance exacte puis approchée) ──
+            # ── Affection ──
             aff_key = affection_libelle.lower()
             if aff_key not in affection_cache:
-                aff = Affection.query.filter(
-                    func.lower(Affection.libelle) == aff_key
-                ).first()
+                aff = Affection.query.filter(func.lower(Affection.libelle) == aff_key).first()
                 if not aff:
-                    # Correspondance sur les 20 premiers caractères
                     aff = Affection.query.filter(
                         Affection.libelle.ilike(f'{affection_libelle[:20]}%')
                     ).first()
@@ -967,49 +1025,71 @@ def import_excel_editions():
             affection = affection_cache[aff_key]
 
             if not affection:
-                warnings.append(f'Ligne {row_idx}: affection introuvable « {affection_libelle[:40]} »')
+                db.session.add(ImportLogLigne(
+                    import_log_id=import_log.id,
+                    row_num=row_idx,
+                    statut='ignore',
+                    eps_nom=eps_nom_raw,
+                    periode=periode,
+                    affection=affection_libelle[:200],
+                    edition_annee=edition_annee,
+                    message=f'Affection introuvable : « {affection_libelle[:60]} »'
+                ))
                 skipped += 1
                 continue
 
             # ── FicheJournaliere (find or create) ──
             fiche = FicheJournaliere.query.filter_by(
-                eps_id=eps.id,
-                edition_id=edition.id,
-                periode=periode
+                eps_id=eps.id, edition_id=edition.id, periode=periode
             ).first()
             if not fiche:
                 fiche = FicheJournaliere(
-                    eps_id=eps.id,
-                    edition_id=edition.id,
-                    periode=periode,
-                    saisi_par='Import Excel',
-                    statut='soumis'
+                    eps_id=eps.id, edition_id=edition.id,
+                    periode=periode, saisi_par='Import Excel', statut='soumis'
                 )
                 db.session.add(fiche)
                 db.session.flush()
 
             # ── LigneConsultation (upsert) ──
             ligne = LigneConsultation.query.filter_by(
-                fiche_id=fiche.id,
-                affection_id=affection.id
+                fiche_id=fiche.id, affection_id=affection.id
             ).first()
             if ligne:
                 ligne.cas_simples  = max(0, cas_simples)
                 ligne.hospitalises = max(0, hospitalises)
                 ligne.evacues      = max(0, evacues)
                 ligne.decedes      = max(0, decedes)
+                statut_ligne = 'mis_a_jour'
                 updated += 1
             else:
                 ligne = LigneConsultation(
-                    fiche_id=fiche.id,
-                    affection_id=affection.id,
+                    fiche_id=fiche.id, affection_id=affection.id,
                     cas_simples=max(0, cas_simples),
                     hospitalises=max(0, hospitalises),
                     evacues=max(0, evacues),
                     decedes=max(0, decedes)
                 )
                 db.session.add(ligne)
+                statut_ligne = 'cree'
                 created += 1
+
+            db.session.add(ImportLogLigne(
+                import_log_id=import_log.id,
+                row_num=row_idx,
+                statut=statut_ligne,
+                eps_nom=eps.nom,
+                periode=periode,
+                affection=affection.libelle[:200],
+                edition_annee=edition_annee,
+                message=None
+            ))
+
+        # Mettre à jour les compteurs du log
+        import_log.nb_created = created
+        import_log.nb_updated = updated
+        import_log.nb_skipped = skipped
+        import_log.nb_total   = nb_total
+        import_log.statut     = 'ok'
 
         db.session.commit()
 
@@ -1019,14 +1099,13 @@ def import_excel_editions():
         msg += '.'
         flash(msg, 'success')
 
-        # Afficher les 8 premiers avertissements
-        for w in warnings[:8]:
-            flash(w, 'warning')
-        if len(warnings) > 8:
-            flash(f'… et {len(warnings) - 8} autre(s) avertissement(s).', 'warning')
-
     except Exception as ex:
-        db.session.rollback()
+        import_log.statut = 'erreur'
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
         flash(f"Erreur lors de l'import : {ex}", 'danger')
+        return redirect(url_for('admin.toutes_editions'))
 
-    return redirect(url_for('admin.toutes_editions'))
+    return redirect(url_for('admin.toutes_editions', log_id=import_log.id) + '#tab-logs')

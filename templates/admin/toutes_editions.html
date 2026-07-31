@@ -42,6 +42,13 @@
     padding-bottom: .4rem;
     margin-bottom: 1rem;
   }
+  .btn-xs {
+    padding: 2px 8px;
+    font-size: .75rem;
+    border-radius: 4px;
+  }
+  .log-row.d-none { display: none !important; }
+  .accordion-button:not(.collapsed) { background-color: #e8f5e9; color: #1a6b3c; }
 </style>
 {% endblock %}
 
@@ -49,7 +56,7 @@
 <div class="container-fluid py-3">
 
   <!-- En-tête -->
-  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
     <div>
       <h4 class="mb-0 fw-bold text-success">
         <i class="bi bi-calendar2-range me-2"></i>Toutes les Éditions
@@ -65,6 +72,30 @@
       </button>
     </div>
   </div>
+
+  <!-- Onglets principaux -->
+  <ul class="nav nav-tabs mb-4" id="mainTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="tab-stats-btn" data-bs-toggle="tab"
+              data-bs-target="#tab-stats" type="button" role="tab">
+        <i class="bi bi-bar-chart-line me-1"></i>Statistiques & Graphiques
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tab-logs-btn" data-bs-toggle="tab"
+              data-bs-target="#tab-logs" type="button" role="tab">
+        <i class="bi bi-journal-text me-1"></i>Logs d'import
+        {% if import_logs %}
+        <span class="badge bg-secondary ms-1">{{ import_logs|length }}</span>
+        {% endif %}
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content" id="mainTabsContent">
+
+  <!-- ═══ TAB : Statistiques & Graphiques ═══ -->
+  <div class="tab-pane fade show active" id="tab-stats" role="tabpanel">
 
   {% if not editions %}
   <div class="text-center py-5 text-muted">
@@ -206,6 +237,159 @@
   </div>
 
   {% endif %}
+
+  </div><!-- /tab-pane stats -->
+
+  <!-- ═══ TAB : Logs d'import ═══ -->
+  <div class="tab-pane fade" id="tab-logs" role="tabpanel">
+
+    {% if not import_logs %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-journal-x" style="font-size:3rem;opacity:.3;"></i>
+      <p class="mt-3">Aucun import effectué pour l'instant.</p>
+      <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalImport">
+        <i class="bi bi-cloud-upload me-1"></i> Importer un fichier Excel
+      </button>
+    </div>
+    {% else %}
+
+    <!-- Liste des imports (accordéon) -->
+    <div class="accordion" id="accordionLogs">
+      {% for log in import_logs %}
+      <div class="accordion-item border-0 shadow-sm mb-2">
+        <h2 class="accordion-header" id="logHead{{ log.id }}">
+          <button class="accordion-button {% if last_import_id != log.id %}collapsed{% endif %} py-2"
+                  type="button" data-bs-toggle="collapse"
+                  data-bs-target="#logBody{{ log.id }}"
+                  aria-expanded="{{ 'true' if last_import_id == log.id else 'false' }}"
+                  aria-controls="logBody{{ log.id }}">
+            <div class="d-flex align-items-center gap-3 flex-wrap w-100">
+              <!-- Statut badge -->
+              {% if log.statut == 'ok' %}
+              <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>OK</span>
+              {% else %}
+              <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Erreur</span>
+              {% endif %}
+              <!-- Nom fichier -->
+              <span class="fw-semibold text-truncate" style="max-width:260px;">
+                <i class="bi bi-file-earmark-excel text-success me-1"></i>{{ log.filename or '—' }}
+              </span>
+              <!-- Date -->
+              <small class="text-muted">{{ log.date_import.strftime('%d/%m/%Y %H:%M') }}</small>
+              <!-- Par qui -->
+              <small class="text-muted"><i class="bi bi-person me-1"></i>{{ log.fait_par or '—' }}</small>
+              <!-- Compteurs -->
+              <div class="ms-auto d-flex gap-2 me-2">
+                <span class="badge bg-success bg-opacity-75" title="Créées">
+                  <i class="bi bi-plus-circle me-1"></i>{{ log.nb_created }}
+                </span>
+                <span class="badge bg-warning text-dark" title="Mises à jour">
+                  <i class="bi bi-arrow-repeat me-1"></i>{{ log.nb_updated }}
+                </span>
+                {% if log.nb_skipped > 0 %}
+                <span class="badge bg-danger bg-opacity-75" title="Ignorées">
+                  <i class="bi bi-slash-circle me-1"></i>{{ log.nb_skipped }}
+                </span>
+                {% endif %}
+                <span class="badge bg-secondary" title="Total lignes">
+                  {{ log.nb_total }} lignes
+                </span>
+              </div>
+            </div>
+          </button>
+        </h2>
+        <div id="logBody{{ log.id }}"
+             class="accordion-collapse collapse {% if last_import_id == log.id %}show{% endif %}"
+             aria-labelledby="logHead{{ log.id }}"
+             data-bs-parent="#accordionLogs">
+          <div class="accordion-body p-0">
+            {% set all_lines = log.lignes %}
+            {% if not all_lines %}
+            <p class="text-muted text-center py-3 mb-0">Aucune entrée de log pour cet import.</p>
+            {% else %}
+            <!-- Filtre rapide -->
+            <div class="d-flex gap-2 align-items-center px-3 py-2 bg-light border-bottom flex-wrap">
+              <small class="fw-semibold text-muted">Filtrer :</small>
+              <button class="btn btn-xs btn-outline-secondary btn-filter-log active"
+                      data-filter="all" data-log="{{ log.id }}">Tout</button>
+              <button class="btn btn-xs btn-outline-success btn-filter-log"
+                      data-filter="cree" data-log="{{ log.id }}">
+                <i class="bi bi-plus-circle me-1"></i>Créées
+              </button>
+              <button class="btn btn-xs btn-outline-warning btn-filter-log"
+                      data-filter="mis_a_jour" data-log="{{ log.id }}">
+                <i class="bi bi-arrow-repeat me-1"></i>Mises à jour
+              </button>
+              <button class="btn btn-xs btn-outline-danger btn-filter-log"
+                      data-filter="ignore,erreur" data-log="{{ log.id }}">
+                <i class="bi bi-slash-circle me-1"></i>Ignorées / Erreurs
+              </button>
+              <span class="ms-auto text-muted" style="font-size:.75rem;">
+                {{ all_lines|length }} entrée(s)
+              </span>
+            </div>
+            <div class="table-responsive" style="max-height:420px;overflow-y:auto;">
+              <table class="table table-sm table-hover mb-0 log-table" id="logTable{{ log.id }}">
+                <thead class="table-light sticky-top">
+                  <tr>
+                    <th style="width:70px;">Ligne</th>
+                    <th style="width:110px;">Statut</th>
+                    <th>EPS</th>
+                    <th style="width:70px;">Période</th>
+                    <th>Affection</th>
+                    <th style="width:75px;">Édition</th>
+                    <th>Message</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for ll in all_lines %}
+                  <tr class="log-row" data-statut="{{ ll.statut }}">
+                    <td class="text-center fw-semibold text-secondary">{{ ll.row_num }}</td>
+                    <td>
+                      {% if ll.statut == 'cree' %}
+                      <span class="badge bg-success"><i class="bi bi-plus-circle me-1"></i>Créée</span>
+                      {% elif ll.statut == 'mis_a_jour' %}
+                      <span class="badge bg-warning text-dark"><i class="bi bi-arrow-repeat me-1"></i>MAJ</span>
+                      {% elif ll.statut == 'ignore' %}
+                      <span class="badge bg-secondary"><i class="bi bi-slash-circle me-1"></i>Ignorée</span>
+                      {% elif ll.statut == 'erreur' %}
+                      <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Erreur</span>
+                      {% else %}
+                      <span class="badge bg-light text-dark">{{ ll.statut }}</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-truncate" style="max-width:160px;" title="{{ ll.eps_nom or '' }}">
+                      {{ ll.eps_nom or '—' }}
+                    </td>
+                    <td class="text-center">{{ ll.periode or '—' }}</td>
+                    <td class="text-truncate" style="max-width:200px;" title="{{ ll.affection or '' }}">
+                      {{ ll.affection or '—' }}
+                    </td>
+                    <td class="text-center">{{ ll.edition_annee or '—' }}</td>
+                    <td>
+                      {% if ll.message %}
+                      <span class="text-danger small"><i class="bi bi-exclamation-circle me-1"></i>{{ ll.message }}</span>
+                      {% else %}
+                      <span class="text-success small"><i class="bi bi-check me-1"></i>OK</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </div><!-- /tab-pane logs -->
+
+  </div><!-- /tab-content -->
+
 </div>
 
 <!-- Modal Import Excel -->
@@ -554,6 +738,53 @@ if (dropZone) {
       }
     }
   });
+})();
+
+// ── Filtre des lignes de log ──────────────────────────────
+document.querySelectorAll('.btn-filter-log').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var logId  = this.getAttribute('data-log');
+    var filter = this.getAttribute('data-filter');
+    var table  = document.getElementById('logTable' + logId);
+    if (!table) return;
+
+    // Mettre à jour l'état actif des boutons du même groupe
+    var group = document.querySelectorAll('.btn-filter-log[data-log="' + logId + '"]');
+    group.forEach(function(b) { b.classList.remove('active'); });
+    this.classList.add('active');
+
+    var rows = table.querySelectorAll('.log-row');
+    rows.forEach(function(row) {
+      var statut = row.getAttribute('data-statut');
+      if (filter === 'all') {
+        row.classList.remove('d-none');
+      } else {
+        var filters = filter.split(',');
+        if (filters.indexOf(statut) !== -1) {
+          row.classList.remove('d-none');
+        } else {
+          row.classList.add('d-none');
+        }
+      }
+    });
+  });
+});
+
+// ── Auto-activation de l'onglet Logs après un import ─────
+(function() {
+  if (window.location.hash === '#tab-logs') {
+    var tabBtn = document.getElementById('tab-logs-btn');
+    if (tabBtn) {
+      tabBtn.click();
+      // Petit délai pour que l'accordéon soit visible
+      setTimeout(function() {
+        var opened = document.querySelector('.accordion-collapse.show');
+        if (opened) {
+          opened.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 300);
+    }
+  }
 })();
 </script>
 {% endblock %}
