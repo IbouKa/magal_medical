@@ -742,6 +742,8 @@ EPS_NOM_CORRECTIONS = {
     'PS THIAWÈNE':   'PS THIAWENE',
     'PS GUÉDÉ KAW':  'PS GUEDE KAW',
     'DISTRICT DE GOSSAS': 'DISTRICT GOSSAS',
+    'PS NDILIKY':    'PS TOUBA NDILIQUI',
+    'TOUBA HLM':     'PS TOUBA HLM',
 }
 
 # Corrections de libellés d'affections avec variantes orthographiques ou doubles espaces
@@ -755,6 +757,7 @@ AFFECTION_CORRECTIONS = {
     'Affection buco dentaires':                  'Affections buco dentaires',
     'Affections de l\'oeil et annexes':          'Affections de l\'œil et annexes',
     'Affection dermatologiques':                 'Affections dermatologiques',
+    'Affection appareil digestif':                 'Affections appareil digestif',
     'PFA':                                       'Cas suspects PFA',
     'Rougeole':                                  'Cas suspects Rougeole',
     'Méningite':                                 'Cas suspects Méningite',
@@ -764,7 +767,7 @@ AFFECTION_CORRECTIONS = {
     'Fièvres Hémorragiques':                     'Cas suspects Fièvres Hémorragiques',
     'Maladies chroniques (diabète,…)':           'Maladies chroniques (diabète...)',
     'Maladies  chroniques (diabète,…)':          'Maladies chroniques (diabète...)',
-    '(COVID 19) Cas Suspect':                    'Cas Suspects COVID-19',
+    '(COVID 19) Cas Suspect':                    'Cas suspects COVID-19',
     '(COVID 19) Cas confirmé':                   'Cas confirmés COVID-19',
     'Cas suspect de Rougeole':                   'Cas suspects Rougeole',
     'Cas suspect Méningite':                     'Cas suspects Méningite',
