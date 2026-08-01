@@ -326,7 +326,12 @@ class ImportLogLigne(db.Model):
 # SEED DATA
 # ─────────────────────────────────────────────────────────────────────────────
 def seed_data():
-    """Initialise les données de référence si elles n'existent pas."""
+    """Initialise les données de référence si elles n'existent pas.
+    Idempotente : ne fait rien si des EPS existent déjà en base.
+    """
+    # Guard : skip entirely if EPS data already present (re-deployment safety)
+    if EPS.query.count() > 0:
+        return
 
     # Edition active
     if not Edition.query.filter_by(annee=2025).first():
