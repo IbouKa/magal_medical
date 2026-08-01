@@ -747,13 +747,22 @@ EPS_NOM_CORRECTIONS = {
 # clé = libellé brut tel qu'il apparaît dans l'export (sensible à la casse après .strip())
 # valeur = libellé normalisé correspondant à la BDD
 AFFECTION_CORRECTIONS = {
-    'accident circulation Charrette': 'Accidents circulation Charrette',
-    'Accident voie Publique':                 'Accidents voie Publique',
+    'accident circulation Charrette':            'Accidents circulation Charrette',
+    'Accident voie Publique':                    'Accidents voie Publique',
     'Cas de Paludisme confirmé':                 'Cas confirmés Paludisme',
-    'Affection buco dentaires':                'Affections buco dentaires',
-    'Affections de l\'oeil et annexes':         'Affections de l\'œil et annexes',
+    'Affections  Respiratoires':                 'Affections Respiratoires',
+    'Affection buco dentaires':                  'Affections buco dentaires',
+    'Affections de l\'oeil et annexes':          'Affections de l\'œil et annexes',
     'Affection dermatologiques':                 'Affections dermatologiques',
     'PFA':                                       'Cas suspects PFA',
+    'Rougeole':                                  'Cas suspects Rougeole',
+    'Méningite':                                 'Cas suspects Méningite',
+    'Ictère fébrile':                            'Cas suspects Ictère fébrile',
+    'Choléra':                                   'Cas suspects Choléra',
+    'Dengue':                                    'Cas suspects Dengue',
+    'Fièvres Hémorragiques':                     'Cas suspects Fièvres Hémorragiques',
+    'Maladies chroniques (diabète,…)':           'Maladies chroniques (diabète...)',
+    
 }
 
 def _build_editions_stats():
