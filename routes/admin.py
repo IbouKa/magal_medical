@@ -741,6 +741,7 @@ EPS_NOM_CORRECTIONS = {
     'PS HÉLIPORT':   'PS HELIPORT',
     'PS THIAWÈNE':   'PS THIAWENE',
     'PS GUÉDÉ KAW':  'PS GUEDE KAW',
+    'DISTRICT DE GOSSAS': 'DISTRICT GOSSAS',
 }
 
 # Corrections de libellés d'affections avec variantes orthographiques ou doubles espaces
@@ -762,7 +763,15 @@ AFFECTION_CORRECTIONS = {
     'Dengue':                                    'Cas suspects Dengue',
     'Fièvres Hémorragiques':                     'Cas suspects Fièvres Hémorragiques',
     'Maladies chroniques (diabète,…)':           'Maladies chroniques (diabète...)',
-    
+    'Maladies  chroniques (diabète,…)':          'Maladies chroniques (diabète...)',
+    '(COVID 19) Cas Suspect':                    'Cas Suspects COVID-19',
+    '(COVID 19) Cas confirmé':                   'Cas confirmés COVID-19',
+    'Cas suspect de Rougeole':                   'Cas suspects Rougeole',
+    'Cas suspect Méningite':                     'Cas suspects Méningite',
+    'Cas suspect Choléra':                       'Cas suspects Choléra',
+    'Cas suspect Dengue':                        'Cas suspects Dengue',
+    'Cas suspect Fièvres Hémorragiques':          'Cas suspects Fièvres Hémorragiques'
+
 }
 
 def _build_editions_stats():
