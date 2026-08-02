@@ -744,6 +744,63 @@ EPS_NOM_CORRECTIONS = {
     'DISTRICT DE GOSSAS': 'DISTRICT GOSSAS',
     'PS NDILIKY':    'PS TOUBA NDILIQUI',
     'TOUBA HLM':     'PS TOUBA HLM',
+    'cs_serigne_saliou_mbacke_ex_28_su1': 'Résidence KhadimRassoul',
+    'cs_serigne_saliou_mbacke_ex_28_su2':'Keur Serigne Abdou Mbacké (Gde Mosquée)',
+    'cs_serigne_saliou_mbacke_ex_28_su3':'Keur Serigne Abdou Khadre Mbacké 1',
+    'cs_serigne_saliou_mbacke_ex_28_su4':'Keur Serigne Abdou Khadre Mbacké 2',
+    'cs_serigne_saliou_mbacke_ex_28_su5':'Keur Serigne Saliou Mbacké 1',
+    'cs_serigne_saliou_mbacke_ex_28_su6':'Keur Serigne Saliou Mbacké 2',
+    'cs_serigne_saliou_mbacke_ex_28_su7':'Keur SokhnaAstou Gawane',
+    'cs_serigne_saliou_mbacke_ex_28_su8':'Keur Serigne Abdou Lahat Mbacké',
+    'cs_serigne_saliou_mbacke_ex_28_su9':'Keur Serigne Moustapha Massamba',
+    'cs_serigne_saliou_mbacke_ex_28_su10':'Mbacké',
+    'cs_serigne_saliou_mbacke_ex_28_su11':'Keur Serigne ModouMamoune Mbacké',
+    'cs_serigne_saliou_mbacke_ex_28_su12':'Keur Serigne El Hadji Bara Mbacké',
+    'cs_serigne_saliou_mbacke_ex_28_su13':'Keur Serigne MouhamadaneDiobé Mbacké',
+    'cs_serigne_saliou_mbacke_ex_28_su14':'Keur Serigne Moustapha Lacrame Mbacké',
+    'cs_serigne_saliou_mbacke_ex_28_su15':'Keur Sokhna Maï Mbacké',
+    'cs_serigne_saliou_mbacke_ex_28_su16':'Keur Serigne Mourtalla Mbacké',
+    'cs_serigne_saliou_mbacke_ex_28_su17':'Keur Serigne Fallou Mbacké 1',
+    'cs_serigne_saliou_mbacke_ex_28_su18':'Keur Serigne Fallou Mbacké 2',
+    'cs_serigne_saliou_mbacke_ex_28_su20':'Keur Sokhna Mously MbackéSerigneTouba',
+    'cs_serigne_saliou_mbacke_ex_28_su20':'Keur Serigne Mourtalla Mbacké Gare Bou Mag',
+    'cs_serigne_saliou_mbacke_ex_28_su21':'Infirmerie de la Grande Mosquée de Touba',
+    'ps_darou_khoudoss_su1':'Cabinet Paramédical Baye Bira',
+    'ps_darou_khoudoss_su2':'Garabou Serigne Ibra Mbacké',
+    'ps_darou_khoudoss_su3':'Cabinet Médical MatlaboulChifahi',
+    'ps_darou_khoudoss_su4':'Keur Serigne Fallou Sidy (Route de Darou Mousty)',
+    'ps_darou_khoudoss_su5':'Keur Serigne Mbacké Madina',
+    'ps_darou_khoudoss_su6':'Keur Serigne Cheikh Binetou Mbacké',
+    'ps_darou_khoudoss_su7':'Keur Serigne Bassirou de Serigne Saliou Mbacké Darou Khoudoss',
+    'ps_darou_khoudoss_su8':'KeurSerigne Moustapha Mbacké Beïty',
+    'ps_darou_khoudoss_su9':'Pènthie Keur Serigne Souhaïbou',
+    'ps_darou_khoudoss_su10':'Pènthie Keur Serigne Souhaïbou',
+    'ps_darou_khoudoss_su11':'Keur Serigne Mbacké Diop Kalsane',
+    'ps_darou_khoudoss_su12':'Keur Serigne Mbacké Diop Kalsane',
+    'ps_darou_khoudoss_su13':'Keur Serigne Mbaye Sarr (épicerie corniche)',
+    'ps_darou_khoudoss_su14':'Infirmerie Willaya',
+    'ps_darou_khoudoss_su15':'Niari Etages',
+    'ps_darou_khoudoss_su16':'(Chez Dr Kane)',
+    'ps_darou_khoudoss_su17':'Maison de Serigne Fallou Sonhibou',
+    'cs_darou_khoudoss_su1':'Chez Serigne Sidy Moctar KGM (Route de Darou Mousty)',
+    'ps_darou_khoudoss_su2':'Keur Serigne Mourtalla Souhaibou Mbacké (Rte Darou Mousty)',
+    'ps_darou_khoudoss_su3':'Touba Tawfekh Keur Serigne Modou Abdou Mbacké Ibn Serigne Modou Abib',
+    'ps_darou_khoudoss_su4':'Keur Serigne Mourtalla Mbacké HLM',
+    'ps_sourah_su1':'PS SOURAH',
+    'ps_sourah_su2':'Bakhia (Nouveau Cimetière)',
+    'ps_sourah_su3':'Diaka Serigne Mbaye Ndiaye',
+    'ps_sourah_su4':'Siège de TAM',
+    'ps_hlm_su1':'Keur Serigne DAN MBACKE',
+    'cs_darou_marnane_su1':'Keur Serigne Touba Darou Marnane',
+    'cs_darou_marnane_su2':'Pènthe Darou Marnane',TTTTT 
+    'AAA':'cs_darou_marnane_su2',
+    'AAA':'BBBB',
+    'AAA':'BBBB',
+    'AAA':'BBBB',
+    'AAA':'BBBB',
+ 
+
+
 }
 
 # Corrections de libellés d'affections avec variantes orthographiques ou doubles espaces
@@ -913,7 +970,63 @@ def toutes_editions():
     last_import_id = request.args.get('log_id', type=int)
     data['import_logs'] = import_logs
     data['last_import_id'] = last_import_id
+    # Listes pour les filtres du graphique Évolution par période
+    data['districts'] = District.query.order_by(District.ordre).all()
+    data['eps_list'] = (
+        EPS.query.filter_by(actif=True)
+        .join(District)
+        .order_by(District.ordre, EPS.nom)
+        .all()
+    )
     return render_template('admin/toutes_editions.html', **data)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# API AJAX — données filtrées pour le graphique Évolution par période
+# ─────────────────────────────────────────────────────────────────────────────
+@admin_bp.route('/toutes-editions/api/periode-data')
+@login_required
+@admin_required
+def api_periode_data():
+    """
+    Retourne les données du graphique « Évolution par période » filtrées
+    par district (district_id) et/ou par EPS (eps_id).
+    """
+    district_id = request.args.get('district_id', type=int)
+    eps_id      = request.args.get('eps_id',      type=int)
+
+    editions = Edition.query.order_by(Edition.annee).all()
+    palette  = ['#198754', '#0d6efd', '#fd7e14', '#dc3545',
+                '#6610f2', '#20c997', '#ffc107', '#0dcaf0']
+
+    period_datasets = []
+    for i, ed in enumerate(editions):
+        period_data = []
+        for p in PERIODES:
+            q = db.session.query(
+                func.sum(
+                    LigneConsultation.cas_simples
+                    + LigneConsultation.hospitalises
+                    + LigneConsultation.evacues
+                )
+            ).join(FicheJournaliere).filter(
+                FicheJournaliere.edition_id == ed.id,
+                FicheJournaliere.periode    == p
+            )
+            if eps_id:
+                q = q.filter(FicheJournaliere.eps_id == eps_id)
+            elif district_id:
+                q = q.join(EPS, FicheJournaliere.eps_id == EPS.id).filter(
+                    EPS.district_id == district_id
+                )
+            period_data.append(q.scalar() or 0)
+        period_datasets.append({
+            'label': str(ed.annee),
+            'data':  period_data,
+            'color': palette[i % len(palette)],
+        })
+
+    return jsonify({'labels': PERIODES, 'datasets': period_datasets})
 
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -195,6 +195,48 @@
       <div class="card shadow-sm">
         <div class="card-body">
           <p class="section-title"><i class="bi bi-graph-up me-1"></i>Évolution par période (J-2 → J+3) — comparaison inter-éditions</p>
+
+          <!-- ── Filtres District / EPS ── -->
+          <div class="d-flex flex-wrap gap-3 align-items-end mb-3 p-2 rounded"
+               style="background:#f0faf4;border:1px solid #c8e6c9;">
+            <div>
+              <label class="form-label fw-semibold mb-1 small text-success">
+                <i class="bi bi-geo-alt-fill me-1"></i>District / Zone
+              </label>
+              <select id="periodeFilterDistrict" class="form-select form-select-sm"
+                      style="min-width:190px;">
+                <option value="">— Tous les districts —</option>
+                {% for d in districts %}
+                <option value="{{ d.id }}">{{ d.nom }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="form-label fw-semibold mb-1 small text-success">
+                <i class="bi bi-hospital me-1"></i>EPS
+              </label>
+              <select id="periodeFilterEPS" class="form-select form-select-sm"
+                      style="min-width:210px;">
+                <option value="">— Toutes les EPS —</option>
+                {% for e in eps_list %}
+                <option value="{{ e.id }}" data-district="{{ e.district_id }}">{{ e.nom }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mt-auto">
+              <button id="periodeFilterReset" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-counterclockwise me-1"></i>Réinitialiser
+              </button>
+            </div>
+            <div class="ms-auto mt-auto">
+              <span id="periodeFilterBadge" class="badge bg-success d-none"></span>
+              <span id="periodeFilterSpinner"
+                    class="spinner-border spinner-border-sm text-success d-none"
+                    role="status"></span>
+            </div>
+          </div>
+          <!-- ── Fin filtres ── -->
+
           <div class="chart-container-lg"><canvas id="chartPeriode"></canvas></div>
         </div>
       </div>
@@ -577,46 +619,162 @@ if (dropZone) {
   });
 })();
 
-// ── Chart 3 : Lignes — Évolution par période ─────────────
+// ── Chart 3 : Lignes — Évolution par période (avec filtres District / EPS) ──
+var chartPeriodeInstance = null;
 (function() {
   var el = document.getElementById('chartPeriode');
   if (!el || !chartPeriodeData.labels || !chartPeriodeData.labels.length) return;
-  new Chart(el, {
+
+  /* ── Config réutilisable ── */
+  var chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { position: 'top', labels: { font: { size: 11 } } },
+      tooltip: {
+        callbacks: {
+          label: function(ctx) {
+            return ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString();
+          }
+        }
+      }
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { beginAtZero: true, ticks: { callback: function(v) { return v.toLocaleString(); } } }
+    }
+  };
+
+  function datasetsFromRaw(rawDatasets) {
+    return rawDatasets.map(function(ds) {
+      return {
+        label: ds.label,
+        data: ds.data,
+        borderColor: ds.color,
+        backgroundColor: ds.color + '22',
+        fill: true,
+        tension: 0.35,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        borderWidth: 2
+      };
+    });
+  }
+
+  chartPeriodeInstance = new Chart(el, {
     type: 'line',
     data: {
       labels: chartPeriodeData.labels,
-      datasets: chartPeriodeData.datasets.map(function(ds) {
-        return {
-          label: ds.label,
-          data: ds.data,
-          borderColor: ds.color,
-          backgroundColor: ds.color + '22',
-          fill: true,
-          tension: 0.35,
-          pointRadius: 5,
-          pointHoverRadius: 7,
-          borderWidth: 2
-        };
-      })
+      datasets: datasetsFromRaw(chartPeriodeData.datasets)
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { position: 'top', labels: { font: { size: 11 } } },
-        tooltip: {
-          callbacks: {
-            label: function(ctx) { return ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString(); }
-          }
-        }
-      },
-      scales: {
-        x: { grid: { display: false } },
-        y: { beginAtZero: true, ticks: { callback: function(v) { return v.toLocaleString(); } } }
-      }
-    }
+    options: chartOptions
   });
+
+  /* ── Éléments UI filtres ── */
+  var selDistrict = document.getElementById('periodeFilterDistrict');
+  var selEPS      = document.getElementById('periodeFilterEPS');
+  var btnReset    = document.getElementById('periodeFilterReset');
+  var badgeEl     = document.getElementById('periodeFilterBadge');
+  var spinnerEl   = document.getElementById('periodeFilterSpinner');
+
+  /* Snapshot de toutes les options EPS pour le filtrage en cascade */
+  var allEPSOpts = selEPS
+    ? Array.from(selEPS.options).map(function(o) {
+        return { value: o.value, text: o.text, district: o.dataset.district };
+      })
+    : [];
+
+  /* Met à jour le badge indiquant le filtre actif */
+  function updateBadge() {
+    if (!badgeEl) return;
+    var distName = selDistrict && selDistrict.value
+      ? selDistrict.options[selDistrict.selectedIndex].text : '';
+    var epsName  = selEPS && selEPS.value
+      ? selEPS.options[selEPS.selectedIndex].text : '';
+    if (epsName) {
+      badgeEl.textContent = epsName;
+      badgeEl.classList.remove('d-none');
+    } else if (distName) {
+      badgeEl.textContent = distName;
+      badgeEl.classList.remove('d-none');
+    } else {
+      badgeEl.classList.add('d-none');
+    }
+  }
+
+  /* Filtre en cascade : restreint la liste EPS au district sélectionné */
+  function cascadeEPS() {
+    if (!selEPS) return;
+    var distId = selDistrict ? selDistrict.value : '';
+    var prevVal = selEPS.value;
+    while (selEPS.options.length) selEPS.remove(0);
+    allEPSOpts.forEach(function(o) {
+      if (!distId || o.value === '' || o.district === distId) {
+        var opt = document.createElement('option');
+        opt.value = o.value;
+        opt.text  = o.text;
+        opt.dataset.district = o.district;
+        selEPS.appendChild(opt);
+      }
+    });
+    /* Rétablir la valeur si elle existe encore, sinon vider */
+    selEPS.value = prevVal;
+    if (selEPS.value !== prevVal) selEPS.value = '';
+  }
+
+  /* Rafraîchit le graphique : données initiales ou appel AJAX */
+  function refreshChart() {
+    if (!chartPeriodeInstance) return;
+    var distId = selDistrict ? selDistrict.value : '';
+    var epsId  = selEPS      ? selEPS.value      : '';
+
+    updateBadge();
+
+    if (!distId && !epsId) {
+      /* Pas de filtre → données initiales */
+      chartPeriodeInstance.data.datasets = datasetsFromRaw(chartPeriodeData.datasets);
+      chartPeriodeInstance.update();
+      return;
+    }
+
+    /* Appel AJAX */
+    var url = '/admin/toutes-editions/api/periode-data?';
+    if (epsId)       url += 'eps_id=' + epsId;
+    else if (distId) url += 'district_id=' + distId;
+
+    if (spinnerEl) spinnerEl.classList.remove('d-none');
+
+    fetch(url, { credentials: 'same-origin' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        chartPeriodeInstance.data.datasets = datasetsFromRaw(data.datasets);
+        chartPeriodeInstance.update();
+        if (spinnerEl) spinnerEl.classList.add('d-none');
+      })
+      .catch(function() {
+        if (spinnerEl) spinnerEl.classList.add('d-none');
+      });
+  }
+
+  /* Listeners */
+  if (selDistrict) {
+    selDistrict.addEventListener('change', function() {
+      cascadeEPS();
+      refreshChart();
+    });
+  }
+  if (selEPS) {
+    selEPS.addEventListener('change', function() { refreshChart(); });
+  }
+  if (btnReset) {
+    btnReset.addEventListener('click', function() {
+      if (selDistrict) selDistrict.value = '';
+      cascadeEPS();
+      if (selEPS) selEPS.value = '';
+      refreshChart();
+    });
+  }
 })();
 
 // ── Chart 4 : Barres horizontales — Top affections ───────
