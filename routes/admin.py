@@ -793,11 +793,7 @@ EPS_NOM_CORRECTIONS = {
     'ps_hlm_su1':'Keur Serigne DAN MBACKE',
     'cs_darou_marnane_su1':'Keur Serigne Touba Darou Marnane',
     'cs_darou_marnane_su2':'Pènthe Darou Marnane', 
-    'AAA':'cs_darou_marnane_su2',
-    'AAA':'BBBB',
-    'AAA':'BBBB',
-    'AAA':'BBBB',
-    'AAA':'BBBB',
+    'AAA':'cs_darou_marnane_su2'
  
 
 
