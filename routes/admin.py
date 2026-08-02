@@ -792,7 +792,7 @@ EPS_NOM_CORRECTIONS = {
     'ps_sourah_su4':'Siège de TAM',
     'ps_hlm_su1':'Keur Serigne DAN MBACKE',
     'cs_darou_marnane_su1':'Keur Serigne Touba Darou Marnane',
-    'cs_darou_marnane_su2':'Pènthe Darou Marnane',TTTTT 
+    'cs_darou_marnane_su2':'Pènthe Darou Marnane', 
     'AAA':'cs_darou_marnane_su2',
     'AAA':'BBBB',
     'AAA':'BBBB',
