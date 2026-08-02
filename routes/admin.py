@@ -793,7 +793,22 @@ EPS_NOM_CORRECTIONS = {
     'ps_hlm_su1':'Keur Serigne DAN MBACKE',
     'cs_darou_marnane_su1':'Keur Serigne Touba Darou Marnane',
     'cs_darou_marnane_su2':'Pènthe Darou Marnane', 
-    'AAA':'cs_darou_marnane_su2'
+
+
+    'HOPITAL_HEINRICH_LUBKE_DE_DIOURBEL ':'HR DIOURBEL',
+    'PS_BOUKHATOUL_SU1':'HR DIOURBEL', 
+    'PS_TINDODY_SU1':'PS TINDODY', 
+    'PS_BOBOREL_SU1':'PS BOBOREL', 
+    'PS_KHAIRA_SU5':'PenthieNdiéné', 
+    'PS_KHAIRA_SU6':'Keur Serigne Bara Doly Mbacké', 
+    'PS KHAIRA SU7':'Keur Serigne Bara Doly Mbacké', 
+    'AAA':'AAAA', 
+    'AAA':'AAAA', 
+    'AAA':'AAAA', 
+    'AAA':'AAAA', 
+    'AAA':'AAAA', 
+    'AAA':'AAAA', 
+    'AAA':'AAAA', 
  
 
 
